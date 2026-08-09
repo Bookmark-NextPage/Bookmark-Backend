@@ -19,6 +19,7 @@ public class CollectBookService {
 
     private final CollectBookRepository collectBookRepository;
 
+    // 콜렉트 북 생성
     @Transactional
     public CollectBookCreateResponse createCollectBook(Long userId, CollectBookCreateRequest request) {
 
@@ -66,5 +67,19 @@ public class CollectBookService {
         if (chapterType == ChapterType.CUSTOM && chapters.size() > 20) {
             throw new IllegalArgumentException("직접 설정 시 챕터는 최대 20개까지 생성 가능합니다.");
         }
+    }
+
+    // 콜렉트 북 삭제
+    @Transactional
+    public void deleteCollectBook(Long userId, Long collectBookId) {
+        CollectBook collectBook = collectBookRepository.findById(collectBookId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
+
+        // 본인 소유의 콜렉트북인지 검증
+        if (!collectBook.getUserId().equals(userId)) {
+            throw new IllegalStateException("해당 콜렉트북을 삭제할 권한이 없습니다.");
+        }
+
+        collectBookRepository.delete(collectBook);
     }
 }
