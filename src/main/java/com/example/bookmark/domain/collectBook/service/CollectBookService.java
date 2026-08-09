@@ -1,0 +1,70 @@
+package com.example.bookmark.domain.collectBook.service;
+
+import com.example.bookmark.domain.collectBook.dto.request.CollectBookCreateRequest;
+import com.example.bookmark.domain.collectBook.dto.response.CollectBookCreateResponse;
+import com.example.bookmark.domain.collectBook.entity.Chapter;
+import com.example.bookmark.domain.collectBook.entity.CollectBook;
+import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
+import com.example.bookmark.domain.collectBook.repository.CollectBookRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class CollectBookService {
+
+    private final CollectBookRepository collectBookRepository;
+
+    @Transactional
+    public CollectBookCreateResponse createCollectBook(Long userId, CollectBookCreateRequest request) {
+
+        List<CollectBookCreateRequest.ChapterCreateRequest> chapterRequests = request.chapters();
+
+        // 1. 챕터 개수 및 세부 검증
+        validateChapterCount(request.chapterType(), chapterRequests);
+
+        // 2. CollectBook 엔티티 생성
+        CollectBook collectBook = CollectBook.builder()
+                .userId(userId)
+                .title(request.title())
+                .bookColor(request.coverColor())
+                .year(request.year())
+                .visibility(request.visibility())
+                .chapterType(request.chapterType())
+                .chapterNum(chapterRequests.size())
+                .build();
+
+        // 3. 전달받은 챕터 이름으로 생성 (순서 1부터 자동 할당)
+        for (int i = 0; i < chapterRequests.size(); i++) {
+            Chapter chapter = Chapter.builder()
+                    .sequence(i + 1)
+                    .name(chapterRequests.get(i).name())
+                    .build();
+            collectBook.addChapter(chapter);
+        }
+
+        // 4. DB 저장
+        CollectBook savedBook = collectBookRepository.save(collectBook);
+
+        // 5. 생성된 책 정보 DTO 변환 후 반환
+        return CollectBookCreateResponse.from(savedBook);
+    }
+
+    private void validateChapterCount(ChapterType chapterType, List<CollectBookCreateRequest.ChapterCreateRequest> chapters) {
+        if (chapters == null || chapters.isEmpty()) {
+            throw new IllegalArgumentException("최소 1개 이상의 챕터가 필요합니다.");
+        }
+
+        if (chapterType == ChapterType.MONTHLY && chapters.size() != 12) {
+            throw new IllegalArgumentException("월 단위 설정 시 챕터는 정확히 12개여야 합니다.");
+        }
+
+        if (chapterType == ChapterType.CUSTOM && chapters.size() > 20) {
+            throw new IllegalArgumentException("직접 설정 시 챕터는 최대 20개까지 생성 가능합니다.");
+        }
+    }
+}
