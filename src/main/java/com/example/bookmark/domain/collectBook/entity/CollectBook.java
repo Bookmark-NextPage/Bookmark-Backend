@@ -42,6 +42,7 @@ public class CollectBook {
     private Integer year;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Visibility visibility;
 
     @Enumerated(EnumType.STRING)
@@ -65,8 +66,7 @@ public class CollectBook {
         this.title = title;
         this.bookColor = bookColor;
         this.year = year;
-        this.visibility = visibility;
-        this.chapterType = chapterType;
+        this.visibility = (visibility != null) ? visibility : Visibility.PUBLIC;        this.chapterType = chapterType;
         this.chapterNum = chapterNum;
     }
 

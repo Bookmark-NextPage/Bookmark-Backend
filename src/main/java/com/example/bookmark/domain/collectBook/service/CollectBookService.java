@@ -2,6 +2,8 @@ package com.example.bookmark.domain.collectBook.service;
 
 import com.example.bookmark.domain.collectBook.dto.request.CollectBookCreateRequest;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookCreateResponse;
+import com.example.bookmark.domain.collectBook.dto.response.CollectBookDetailResponse;
+import com.example.bookmark.domain.collectBook.dto.response.CollectBookListResponse;
 import com.example.bookmark.domain.collectBook.entity.Chapter;
 import com.example.bookmark.domain.collectBook.entity.CollectBook;
 import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
@@ -67,6 +69,27 @@ public class CollectBookService {
         if (chapterType == ChapterType.CUSTOM && chapters.size() > 20) {
             throw new IllegalArgumentException("직접 설정 시 챕터는 최대 20개까지 생성 가능합니다.");
         }
+    }
+
+    // 콜렉트 북 목록 조회
+    @Transactional(readOnly = true)
+    public List<CollectBookListResponse> getCollectBooks(Long userId) {
+        return collectBookRepository.findAllByUserIdOrderByYearDesc(userId).stream()
+                .map(CollectBookListResponse::from)
+                .toList();
+    }
+
+    // 콜렉트 북 상세 조회
+    @Transactional(readOnly = true)
+    public CollectBookDetailResponse getCollectBookDetail(Long userId, Long collectBookId) {
+        CollectBook collectBook = collectBookRepository.findById(collectBookId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
+
+        if (!collectBook.getUserId().equals(userId)) {
+            throw new IllegalStateException("해당 콜렉트북을 조회할 권한이 없습니다.");
+        }
+
+        return CollectBookDetailResponse.from(collectBook);
     }
 
     // 콜렉트 북 삭제
