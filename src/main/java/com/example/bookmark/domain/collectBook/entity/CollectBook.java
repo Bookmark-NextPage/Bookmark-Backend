@@ -74,4 +74,8 @@ public class CollectBook {
         this.chapters.add(chapter);
         chapter.assignCollectBook(this);
     }
+
+    public void updateVisibility(Visibility visibility) {
+        this.visibility = (visibility != null) ? visibility : Visibility.PUBLIC;
+    }
 }
