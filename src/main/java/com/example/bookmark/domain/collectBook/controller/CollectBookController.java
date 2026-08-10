@@ -2,13 +2,13 @@ package com.example.bookmark.domain.collectBook.controller;
 
 
 import com.example.bookmark.domain.collectBook.dto.request.CollectBookCreateRequest;
+import com.example.bookmark.domain.collectBook.dto.request.CollectBookVisibilityUpdateRequest;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookCreateResponse;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookDetailResponse;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookListResponse;
 import com.example.bookmark.domain.collectBook.service.CollectBookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -94,5 +94,22 @@ public class CollectBookController {
         collectBookService.deleteCollectBook(tempUserId, collectBookId);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "콜렉트북 공개 범위 수정", description = "콜렉트북의 공개 범위(PUBLIC, FRIENDS, PRIVATE)를 변경합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "공개 범위 수정 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content),
+            @ApiResponse(responseCode = "403", description = "수정 권한 없음", content = @Content),
+            @ApiResponse(responseCode = "404", description = "존재하지 않는 콜렉트북 ID", content = @Content)
+    })
+    @PatchMapping("/{collectBookId}/visibility")
+    public ResponseEntity<Void> updateVisibility(
+            @PathVariable Long collectBookId,
+            @Valid @RequestBody CollectBookVisibilityUpdateRequest request
+    ) {
+        Long tempUserId = 1L;
+        collectBookService.updateVisibility(tempUserId, collectBookId, request);
+        return ResponseEntity.ok().build();
     }
 }

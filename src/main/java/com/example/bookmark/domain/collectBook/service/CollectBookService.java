@@ -1,6 +1,7 @@
 package com.example.bookmark.domain.collectBook.service;
 
 import com.example.bookmark.domain.collectBook.dto.request.CollectBookCreateRequest;
+import com.example.bookmark.domain.collectBook.dto.request.CollectBookVisibilityUpdateRequest;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookCreateResponse;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookDetailResponse;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookListResponse;
@@ -104,5 +105,18 @@ public class CollectBookService {
         }
 
         collectBookRepository.delete(collectBook);
+    }
+
+    // 콜렉트북 공개 범위 수정
+    @Transactional
+    public void updateVisibility(Long userId, Long collectBookId, CollectBookVisibilityUpdateRequest request) {
+        CollectBook collectBook = collectBookRepository.findById(collectBookId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
+
+        if (!collectBook.getUserId().equals(userId)) {
+            throw new IllegalStateException("해당 콜렉트북의 공개 범위를 수정할 권한이 없습니다.");
+        }
+
+        collectBook.updateVisibility(request.visibility());
     }
 }
