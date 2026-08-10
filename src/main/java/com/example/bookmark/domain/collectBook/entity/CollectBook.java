@@ -2,6 +2,7 @@ package com.example.bookmark.domain.collectBook.entity;
 
 import com.example.bookmark.domain.collectBook.entity.enums.BookColor;
 import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
+import com.example.bookmark.domain.collectBook.entity.enums.CollectBookType;
 import com.example.bookmark.domain.collectBook.entity.enums.Visibility;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -16,10 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "collect_book")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class) // @CreatedDate 작동에 필요
-@Table(name = "collect_book")
+@EntityListeners(AuditingEntityListener.class)
 public class CollectBook {
 
     @Id
@@ -27,11 +28,10 @@ public class CollectBook {
     @Column(name = "collect_book_id")
     private Long id;
 
-    // TODO: 유저 연결 필요!
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private String title;
 
     @Enumerated(EnumType.STRING)
@@ -42,8 +42,8 @@ public class CollectBook {
     private Integer year;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Visibility visibility;
+    @Column(name = "visibility")
+    private Visibility visibility = Visibility.PUBLIC;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "chapter_type", nullable = false)
@@ -52,7 +52,11 @@ public class CollectBook {
     @Column(name = "chapter_num", nullable = false)
     private Integer chapterNum;
 
-    @CreatedDate // 자동 생성 시간 할당
+    @Enumerated(EnumType.STRING)
+    @Column(name = "collect_book_type", nullable = false)
+    private CollectBookType collectBookType;
+
+    @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -61,13 +65,16 @@ public class CollectBook {
 
     @Builder
     public CollectBook(Long userId, String title, BookColor bookColor, Integer year,
-                       Visibility visibility, ChapterType chapterType, Integer chapterNum) {
+                       Visibility visibility, ChapterType chapterType, Integer chapterNum,
+                       CollectBookType collectBookType) {
         this.userId = userId;
         this.title = title;
         this.bookColor = bookColor;
         this.year = year;
-        this.visibility = (visibility != null) ? visibility : Visibility.PUBLIC;        this.chapterType = chapterType;
+        this.visibility = visibility != null ? visibility : Visibility.PUBLIC;
+        this.chapterType = chapterType;
         this.chapterNum = chapterNum;
+        this.collectBookType = collectBookType != null ? collectBookType : CollectBookType.CUSTOM;
     }
 
     public void addChapter(Chapter chapter) {
@@ -76,6 +83,10 @@ public class CollectBook {
     }
 
     public void updateVisibility(Visibility visibility) {
-        this.visibility = (visibility != null) ? visibility : Visibility.PUBLIC;
+        this.visibility = visibility;
+    }
+
+    public boolean isSystemType() {
+        return this.collectBookType == CollectBookType.SYSTEM;
     }
 }
