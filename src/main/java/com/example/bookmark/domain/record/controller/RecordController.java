@@ -1,8 +1,9 @@
 package com.example.bookmark.domain.record.controller;
 
+import com.example.bookmark.domain.record.dto.request.CommentCreateRequest;
 import com.example.bookmark.domain.record.dto.request.RecordCreateRequest;
 import com.example.bookmark.domain.record.dto.request.RecordDraftSaveRequest;
-import com.example.bookmark.domain.record.dto.response.RecordDetailResponse; // ✨ 상세 조회 DTO import
+import com.example.bookmark.domain.record.dto.response.RecordDetailResponse;
 import com.example.bookmark.domain.record.dto.response.RecordSaveResponse;
 import com.example.bookmark.domain.record.service.RecordService;
 import com.example.bookmark.global.auth.LoginUserId;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,5 +72,39 @@ public class RecordController {
             @PathVariable Long recordId
     ) {
         return ResponseEntity.ok(recordService.getRecordDetail(userId, collectBookId, recordId));
+    }
+
+    @Operation(summary = "댓글 작성", description = "친구인 유저들끼리 서로의 콜렉트북 내 기록에 댓글을 남깁니다.")
+    @PostMapping("/collect-books/{collectBookId}/records/{recordId}/comments")
+    public ResponseEntity<Void> createComment(
+            @LoginUserId Long userId,
+            @PathVariable Long collectBookId,
+            @PathVariable Long recordId,
+            @Valid @RequestBody CommentCreateRequest request
+    ) {
+        recordService.createComment(userId, collectBookId, recordId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @Operation(summary = "좋아요 등록", description = "친구인 유저들끼리 서로의 콜렉트북 내 기록에 공감(좋아요)을 남깁니다.")
+    @PostMapping("/collect-books/{collectBookId}/records/{recordId}/likes")
+    public ResponseEntity<Void> addLike(
+            @LoginUserId Long userId,
+            @PathVariable Long collectBookId,
+            @PathVariable Long recordId
+    ) {
+        recordService.addLike(userId, collectBookId, recordId);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "좋아요 삭제", description = "남겼던 공감(좋아요)을 취소합니다.")
+    @DeleteMapping("/collect-books/{collectBookId}/records/{recordId}/likes")
+    public ResponseEntity<Void> deleteLike(
+            @LoginUserId Long userId,
+            @PathVariable Long collectBookId,
+            @PathVariable Long recordId
+    ) {
+        recordService.deleteLike(userId, collectBookId, recordId);
+        return ResponseEntity.noContent().build();
     }
 }
