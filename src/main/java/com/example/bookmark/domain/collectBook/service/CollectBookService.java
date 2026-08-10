@@ -8,6 +8,7 @@ import com.example.bookmark.domain.collectBook.dto.response.CollectBookListRespo
 import com.example.bookmark.domain.collectBook.entity.Chapter;
 import com.example.bookmark.domain.collectBook.entity.CollectBook;
 import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
+import com.example.bookmark.domain.collectBook.entity.enums.CollectBookType;
 import com.example.bookmark.domain.collectBook.repository.CollectBookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class CollectBookService {
 
     private final CollectBookRepository collectBookRepository;
 
-    // 콜렉트 북 생성
+    // 콜렉트 북 생성 (사용자가 직접 생성하는 콜렉트 북 -> 콜렉트 북 타입 CUSTOM)
     @Transactional
     public CollectBookCreateResponse createCollectBook(Long userId, CollectBookCreateRequest request) {
 
@@ -40,6 +41,9 @@ public class CollectBookService {
                 .visibility(request.visibility())
                 .chapterType(request.chapterType())
                 .chapterNum(chapterRequests.size())
+
+                // 사용자가 직접 만들었음을 의미함.
+                .collectBookType(CollectBookType.CUSTOM)
                 .build();
 
         // 3. 전달받은 챕터 이름으로 생성 (순서 1부터 자동 할당)
@@ -102,6 +106,11 @@ public class CollectBookService {
         // 본인 소유의 콜렉트북인지 검증
         if (!collectBook.getUserId().equals(userId)) {
             throw new IllegalStateException("해당 콜렉트북을 삭제할 권한이 없습니다.");
+        }
+
+        // 시스템 자동 생성 콜렉트북은 삭제 불가
+        if (collectBook.isSystemType()) {
+            throw new IllegalArgumentException("시스템에서 자동 생성된 콜렉트북은 삭제할 수 없습니다.");
         }
 
         collectBookRepository.delete(collectBook);
