@@ -1,14 +1,15 @@
 package com.example.bookmark.domain.record.entity;
 
+import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo; // ✨ BucketBoardMemo import
 import com.example.bookmark.domain.collectBook.entity.Chapter;
 import com.example.bookmark.domain.record.entity.enums.RecordStatus;
+import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
@@ -28,12 +29,16 @@ public class Record {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chapter_id", nullable = true) // DRAFT 상태 시 null 허용
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chapter_id")
     private Chapter chapter;
 
-    // TODO : 메모 연결 필요 !!!
-    @Column(name = "memo_id")
-    private Long memoId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bucket_board_memo_id")
+    private BucketBoardMemo bucketBoardMemo;
 
     @Column(length = 50)
     private String title;
@@ -41,15 +46,9 @@ public class Record {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "ai_image_url", length = 500)
-    private String aiImageUrl;
-
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private RecordStatus status;
-
     @Column(nullable = false)
-    private Long likes = 0L;
+    private RecordStatus status;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -62,13 +61,13 @@ public class Record {
     private List<RecordKeyword> recordKeywords = new ArrayList<>();
 
     @Builder
-    public Record(Chapter chapter, Long memoId, String title, String content, RecordStatus status) {
+    public Record(User user, Chapter chapter, BucketBoardMemo bucketBoardMemo, String title, String content, RecordStatus status) {
+        this.user = user;
         this.chapter = chapter;
-        this.memoId = memoId;
+        this.bucketBoardMemo = bucketBoardMemo;
         this.title = title;
         this.content = content;
-        this.status = status != null ? status : RecordStatus.DRAFT;
-        this.likes = 0L;
+        this.status = status;
     }
 
     public void updateRecord(Chapter chapter, String title, String content, RecordStatus status) {

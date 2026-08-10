@@ -19,7 +19,7 @@ public class RecordSaveResponse {
 
     private Long recordId;
     private Long chapterId;
-    private Long memoId;
+    private Long memoId; // 클라이언트에 전달하는 JSON 필드명은 memoId로 유지
     private String title;
     private String content;
     private List<String> imageUrls;
@@ -31,7 +31,7 @@ public class RecordSaveResponse {
         return RecordSaveResponse.builder()
                 .recordId(record.getId())
                 .chapterId(record.getChapter() != null ? record.getChapter().getId() : null)
-                .memoId(record.getMemoId())
+                .memoId(record.getBucketBoardMemo() != null ? record.getBucketBoardMemo().getBucketBoardMemoId() : null)
                 .title(record.getTitle())
                 .content(record.getContent())
                 .imageUrls(record.getImages().stream()

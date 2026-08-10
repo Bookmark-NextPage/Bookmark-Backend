@@ -4,6 +4,7 @@ import com.example.bookmark.domain.collectBook.entity.enums.BookColor;
 import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
 import com.example.bookmark.domain.collectBook.entity.enums.CollectBookType;
 import com.example.bookmark.domain.collectBook.entity.enums.Visibility;
+import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,8 +29,10 @@ public class CollectBook {
     @Column(name = "collect_book_id")
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    // ✨ User FK 연관관계 매핑
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false, length = 10)
     private String title;
@@ -64,10 +67,10 @@ public class CollectBook {
     private List<Chapter> chapters = new ArrayList<>();
 
     @Builder
-    public CollectBook(Long userId, String title, BookColor bookColor, Integer year,
+    public CollectBook(User user, String title, BookColor bookColor, Integer year,
                        Visibility visibility, ChapterType chapterType, Integer chapterNum,
                        CollectBookType collectBookType) {
-        this.userId = userId;
+        this.user = user;
         this.title = title;
         this.bookColor = bookColor;
         this.year = year;

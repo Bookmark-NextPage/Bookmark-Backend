@@ -10,6 +10,8 @@ import com.example.bookmark.domain.collectBook.entity.CollectBook;
 import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
 import com.example.bookmark.domain.collectBook.entity.enums.CollectBookType;
 import com.example.bookmark.domain.collectBook.repository.CollectBookRepository;
+import com.example.bookmark.domain.user.entity.User;
+import com.example.bookmark.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,31 +24,28 @@ import java.util.List;
 public class CollectBookService {
 
     private final CollectBookRepository collectBookRepository;
+    private final UserRepository userRepository; // ✨ UserRepository 추가
 
-    // 콜렉트 북 생성 (사용자가 직접 생성하는 콜렉트 북 -> 콜렉트 북 타입 CUSTOM)
     @Transactional
     public CollectBookCreateResponse createCollectBook(Long userId, CollectBookCreateRequest request) {
+        // ✨ User FK 조회를 통해 유저 존재 여부 확인
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + userId));
 
         List<CollectBookCreateRequest.ChapterCreateRequest> chapterRequests = request.chapters();
-
-        // 1. 챕터 개수 및 세부 검증
         validateChapterCount(request.chapterType(), chapterRequests);
 
-        // 2. CollectBook 엔티티 생성
         CollectBook collectBook = CollectBook.builder()
-                .userId(userId)
+                .user(user) // ✨ User 엔티티 주입
                 .title(request.title())
                 .bookColor(request.coverColor())
                 .year(request.year())
                 .visibility(request.visibility())
                 .chapterType(request.chapterType())
                 .chapterNum(chapterRequests.size())
-
-                // 사용자가 직접 만들었음을 의미함.
                 .collectBookType(CollectBookType.CUSTOM)
                 .build();
 
-        // 3. 전달받은 챕터 이름으로 생성 (순서 1부터 자동 할당)
         for (int i = 0; i < chapterRequests.size(); i++) {
             Chapter chapter = Chapter.builder()
                     .sequence(i + 1)
@@ -55,10 +54,7 @@ public class CollectBookService {
             collectBook.addChapter(chapter);
         }
 
-        // 4. DB 저장
         CollectBook savedBook = collectBookRepository.save(collectBook);
-
-        // 5. 생성된 책 정보 DTO 변환 후 반환
         return CollectBookCreateResponse.from(savedBook);
     }
 
@@ -76,7 +72,6 @@ public class CollectBookService {
         }
     }
 
-    // 콜렉트 북 목록 조회
     @Transactional(readOnly = true)
     public List<CollectBookListResponse> getCollectBooks(Long userId) {
         return collectBookRepository.findAllByUserIdOrderByYearDesc(userId).stream()
@@ -84,31 +79,27 @@ public class CollectBookService {
                 .toList();
     }
 
-    // 콜렉트 북 상세 조회
     @Transactional(readOnly = true)
     public CollectBookDetailResponse getCollectBookDetail(Long userId, Long collectBookId) {
         CollectBook collectBook = collectBookRepository.findById(collectBookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
 
-        if (!collectBook.getUserId().equals(userId)) {
+        if (!collectBook.getUser().getId().equals(userId)) {
             throw new IllegalStateException("해당 콜렉트북을 조회할 권한이 없습니다.");
         }
 
         return CollectBookDetailResponse.from(collectBook);
     }
 
-    // 콜렉트 북 삭제
     @Transactional
     public void deleteCollectBook(Long userId, Long collectBookId) {
         CollectBook collectBook = collectBookRepository.findById(collectBookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
 
-        // 본인 소유의 콜렉트북인지 검증
-        if (!collectBook.getUserId().equals(userId)) {
+        if (!collectBook.getUser().getId().equals(userId)) {
             throw new IllegalStateException("해당 콜렉트북을 삭제할 권한이 없습니다.");
         }
 
-        // 시스템 자동 생성 콜렉트북은 삭제 불가
         if (collectBook.isSystemType()) {
             throw new IllegalArgumentException("시스템에서 자동 생성된 콜렉트북은 삭제할 수 없습니다.");
         }
@@ -116,13 +107,12 @@ public class CollectBookService {
         collectBookRepository.delete(collectBook);
     }
 
-    // 콜렉트북 공개 범위 수정
     @Transactional
     public void updateVisibility(Long userId, Long collectBookId, CollectBookVisibilityUpdateRequest request) {
         CollectBook collectBook = collectBookRepository.findById(collectBookId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
 
-        if (!collectBook.getUserId().equals(userId)) {
+        if (!collectBook.getUser().getId().equals(userId)) {
             throw new IllegalStateException("해당 콜렉트북의 공개 범위를 수정할 권한이 없습니다.");
         }
 

@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface RecordRepository extends JpaRepository<Record, Long> {
 
-    // 가장 최근 DRAFT(임시저장) 기록 1건 조회 (생성일시 내림차순)
-    Optional<Record> findFirstByStatusOrderByCreatedAtDesc(RecordStatus status);
+    // User FK 기반 최근 DRAFT 조회
+    Optional<Record> findFirstByUserIdAndStatusOrderByCreatedAtDesc(Long userId, RecordStatus status);
 }
