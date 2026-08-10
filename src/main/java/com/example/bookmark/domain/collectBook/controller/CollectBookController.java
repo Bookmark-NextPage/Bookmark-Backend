@@ -9,7 +9,6 @@ import com.example.bookmark.domain.collectBook.dto.response.CollectBookListRespo
 import com.example.bookmark.domain.collectBook.service.CollectBookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
