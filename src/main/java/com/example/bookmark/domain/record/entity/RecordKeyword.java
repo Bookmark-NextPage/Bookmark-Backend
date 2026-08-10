@@ -30,4 +30,8 @@ public class RecordKeyword {
         this.record = record;
         this.keyword = keyword;
     }
+
+    public void assignRecord(Record record) {
+        this.record = record;
+    }
 }

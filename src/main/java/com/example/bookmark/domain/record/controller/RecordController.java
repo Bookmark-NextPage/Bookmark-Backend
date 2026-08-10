@@ -2,9 +2,10 @@ package com.example.bookmark.domain.record.controller;
 
 import com.example.bookmark.domain.record.dto.request.RecordCreateRequest;
 import com.example.bookmark.domain.record.dto.request.RecordDraftSaveRequest;
+import com.example.bookmark.domain.record.dto.response.RecordDetailResponse; // ✨ 상세 조회 DTO import
 import com.example.bookmark.domain.record.dto.response.RecordSaveResponse;
 import com.example.bookmark.domain.record.service.RecordService;
-import com.example.bookmark.global.auth.LoginUserId; // ✨ LoginUserId import 추가
+import com.example.bookmark.global.auth.LoginUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -56,5 +57,18 @@ public class RecordController {
             @Valid @RequestBody RecordCreateRequest request
     ) {
         return ResponseEntity.ok(recordService.createMemoRecord(userId, memoId, request));
+    }
+
+    @Operation(
+            summary = "콜렉트북 기록 상세 조회",
+            description = "콜렉트북 스크랩북 형태의 상세 화면입니다. 본문, 키워드, AI 스크랩북 이미지, 좋아요 수/여부, 댓글 목록을 포함합니다."
+    )
+    @GetMapping("/collect-books/{collectBookId}/records/{recordId}")
+    public ResponseEntity<RecordDetailResponse> getRecordDetail(
+            @LoginUserId Long userId,
+            @PathVariable Long collectBookId,
+            @PathVariable Long recordId
+    ) {
+        return ResponseEntity.ok(recordService.getRecordDetail(userId, collectBookId, recordId));
     }
 }

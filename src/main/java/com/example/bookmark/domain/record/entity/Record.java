@@ -1,14 +1,11 @@
 package com.example.bookmark.domain.record.entity;
 
-import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo; // ✨ BucketBoardMemo import
+import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import com.example.bookmark.domain.collectBook.entity.Chapter;
 import com.example.bookmark.domain.record.entity.enums.RecordStatus;
 import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -19,6 +16,8 @@ import java.util.List;
 @Entity
 @Table(name = "records")
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EntityListeners(AuditingEntityListener.class)
 public class Record {
@@ -46,6 +45,12 @@ public class Record {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "ai_image_url", length = 500)
+    private String aiImageUrl;
+
+    @Column(nullable = false)
+    private Long likes = 0L;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RecordStatus status;
@@ -54,20 +59,24 @@ public class Record {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "record", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecordImage> images = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "record", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RecordKeyword> recordKeywords = new ArrayList<>();
 
     @Builder
-    public Record(User user, Chapter chapter, BucketBoardMemo bucketBoardMemo, String title, String content, RecordStatus status) {
+    public Record(User user, Chapter chapter, BucketBoardMemo bucketBoardMemo, String title, String content, String aiImageUrl, RecordStatus status) {
         this.user = user;
         this.chapter = chapter;
         this.bucketBoardMemo = bucketBoardMemo;
         this.title = title;
         this.content = content;
+        this.aiImageUrl = aiImageUrl;
         this.status = status;
+        this.likes = 0L;
     }
 
     public void updateRecord(Chapter chapter, String title, String content, RecordStatus status) {
@@ -77,8 +86,22 @@ public class Record {
         this.status = status;
     }
 
+    public void updateAiImageUrl(String aiImageUrl) {
+        this.aiImageUrl = aiImageUrl;
+    }
+
     public void addImage(RecordImage image) {
         this.images.add(image);
         image.assignRecord(this);
+    }
+
+    public void addRecordKeyword(RecordKeyword recordKeyword) {
+        this.recordKeywords.add(recordKeyword);
+        recordKeyword.assignRecord(this);
+    }
+
+    public void clearImagesAndKeywords() {
+        this.images.clear();
+        this.recordKeywords.clear();
     }
 }
