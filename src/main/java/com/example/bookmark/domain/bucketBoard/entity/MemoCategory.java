@@ -1,9 +1,11 @@
 package com.example.bookmark.domain.bucketBoard.entity;
 
 import com.example.bookmark.common.entity.BaseTimeEntity;
+import com.example.bookmark.domain.bucketBoard.entity.enums.MemoState;
 import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -27,5 +29,15 @@ public class MemoCategory extends BaseTimeEntity {
 
     @Column(name = "default_category", nullable = false)
     private Boolean defaultCategory;
+
+    @Builder
+    public MemoCategory(
+            User user,
+            String categoryName
+    ) {
+        this.user = user;
+        this.categoryName = categoryName;
+        this.defaultCategory = false;
+    }
 
 }

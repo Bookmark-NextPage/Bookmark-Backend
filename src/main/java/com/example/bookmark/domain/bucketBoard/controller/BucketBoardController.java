@@ -2,18 +2,20 @@ package com.example.bookmark.domain.bucketBoard.controller;
 
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketMoveRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketWriteRequest;
+import com.example.bookmark.domain.bucketBoard.dto.request.CategoryRequest;
 import com.example.bookmark.domain.bucketBoard.dto.response.BoardResponse;
 import com.example.bookmark.domain.bucketBoard.dto.response.BucketMoveResponse;
+import com.example.bookmark.domain.bucketBoard.dto.response.CategoryResponse;
 import com.example.bookmark.domain.bucketBoard.dto.response.MemoResponse;
-import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import com.example.bookmark.domain.bucketBoard.service.BucketBoardService;
 import com.example.bookmark.global.auth.LoginUserId;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "BucketBoard", description = "버킷보드 API")
 @RestController
@@ -105,5 +107,29 @@ public class BucketBoardController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(
+            summary = "카테고리 가져오기",
+            description = ""
+    )
+    @GetMapping("/getCategory")
+    public ResponseEntity<List<CategoryResponse>> getCategory(
+            @LoginUserId Long userId
+    ){
+        List<CategoryResponse> response = bucketBoardService.getCategory(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "카테고리 추가하기",
+            description = ""
+    )
+    @PostMapping("/createCategory")
+    public ResponseEntity<CategoryResponse> createCategory(
+            @LoginUserId Long userId,
+            @RequestBody CategoryRequest request
+    ){
+        CategoryResponse response = bucketBoardService.createCategory(userId, request);
+        return ResponseEntity.ok(response);
+    }
 
 }
