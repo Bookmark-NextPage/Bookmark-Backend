@@ -1,5 +1,6 @@
 package com.example.bookmark.domain.collectBook.service;
 
+import com.example.bookmark.common.exception.CustomException;
 import com.example.bookmark.domain.collectBook.dto.request.CollectBookCreateRequest;
 import com.example.bookmark.domain.collectBook.dto.request.CollectBookVisibilityUpdateRequest;
 import com.example.bookmark.domain.collectBook.dto.response.CollectBookCreateResponse;
@@ -9,7 +10,9 @@ import com.example.bookmark.domain.collectBook.entity.Chapter;
 import com.example.bookmark.domain.collectBook.entity.CollectBook;
 import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
 import com.example.bookmark.domain.collectBook.entity.enums.CollectBookType;
+import com.example.bookmark.domain.collectBook.exception.CollectBookErrorCode;
 import com.example.bookmark.domain.collectBook.repository.CollectBookRepository;
+import com.example.bookmark.domain.record.exception.RecordErrorCode;
 import com.example.bookmark.domain.user.entity.User;
 import com.example.bookmark.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,19 +27,18 @@ import java.util.List;
 public class CollectBookService {
 
     private final CollectBookRepository collectBookRepository;
-    private final UserRepository userRepository; // ✨ UserRepository 추가
+    private final UserRepository userRepository;
 
     @Transactional
     public CollectBookCreateResponse createCollectBook(Long userId, CollectBookCreateRequest request) {
-        // ✨ User FK 조회를 통해 유저 존재 여부 확인
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다. id=" + userId));
+                .orElseThrow(() -> new CustomException(RecordErrorCode.USER_NOT_FOUND));
 
         List<CollectBookCreateRequest.ChapterCreateRequest> chapterRequests = request.chapters();
         validateChapterCount(request.chapterType(), chapterRequests);
 
         CollectBook collectBook = CollectBook.builder()
-                .user(user) // ✨ User 엔티티 주입
+                .user(user)
                 .title(request.title())
                 .bookColor(request.coverColor())
                 .year(request.year())
@@ -60,15 +62,15 @@ public class CollectBookService {
 
     private void validateChapterCount(ChapterType chapterType, List<CollectBookCreateRequest.ChapterCreateRequest> chapters) {
         if (chapters == null || chapters.isEmpty()) {
-            throw new IllegalArgumentException("최소 1개 이상의 챕터가 필요합니다.");
+            throw new CustomException(CollectBookErrorCode.CHAPTER_COUNT_INVALID, "최소 1개 이상의 챕터가 필요합니다.");
         }
 
         if (chapterType == ChapterType.MONTHLY && chapters.size() != 12) {
-            throw new IllegalArgumentException("월 단위 설정 시 챕터는 정확히 12개여야 합니다.");
+            throw new CustomException(CollectBookErrorCode.CHAPTER_COUNT_INVALID, "월 단위 설정 시 챕터는 정확히 12개여야 합니다.");
         }
 
         if (chapterType == ChapterType.CUSTOM && chapters.size() > 20) {
-            throw new IllegalArgumentException("직접 설정 시 챕터는 최대 20개까지 생성 가능합니다.");
+            throw new CustomException(CollectBookErrorCode.CHAPTER_COUNT_INVALID, "직접 설정 시 챕터는 최대 20개까지 생성 가능합니다.");
         }
     }
 
@@ -82,10 +84,10 @@ public class CollectBookService {
     @Transactional(readOnly = true)
     public CollectBookDetailResponse getCollectBookDetail(Long userId, Long collectBookId) {
         CollectBook collectBook = collectBookRepository.findById(collectBookId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
+                .orElseThrow(() -> new CustomException(CollectBookErrorCode.COLLECT_BOOK_NOT_FOUND));
 
         if (!collectBook.getUser().getId().equals(userId)) {
-            throw new IllegalStateException("해당 콜렉트북을 조회할 권한이 없습니다.");
+            throw new CustomException(CollectBookErrorCode.COLLECT_BOOK_FORBIDDEN);
         }
 
         return CollectBookDetailResponse.from(collectBook);
@@ -94,14 +96,14 @@ public class CollectBookService {
     @Transactional
     public void deleteCollectBook(Long userId, Long collectBookId) {
         CollectBook collectBook = collectBookRepository.findById(collectBookId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
+                .orElseThrow(() -> new CustomException(CollectBookErrorCode.COLLECT_BOOK_NOT_FOUND));
 
         if (!collectBook.getUser().getId().equals(userId)) {
-            throw new IllegalStateException("해당 콜렉트북을 삭제할 권한이 없습니다.");
+            throw new CustomException(CollectBookErrorCode.COLLECT_BOOK_FORBIDDEN);
         }
 
         if (collectBook.isSystemType()) {
-            throw new IllegalArgumentException("시스템에서 자동 생성된 콜렉트북은 삭제할 수 없습니다.");
+            throw new CustomException(CollectBookErrorCode.SYSTEM_COLLECT_BOOK_DELETE_NOT_ALLOWED);
         }
 
         collectBookRepository.delete(collectBook);
@@ -110,10 +112,10 @@ public class CollectBookService {
     @Transactional
     public void updateVisibility(Long userId, Long collectBookId, CollectBookVisibilityUpdateRequest request) {
         CollectBook collectBook = collectBookRepository.findById(collectBookId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 콜렉트북입니다. id=" + collectBookId));
+                .orElseThrow(() -> new CustomException(CollectBookErrorCode.COLLECT_BOOK_NOT_FOUND));
 
         if (!collectBook.getUser().getId().equals(userId)) {
-            throw new IllegalStateException("해당 콜렉트북의 공개 범위를 수정할 권한이 없습니다.");
+            throw new CustomException(CollectBookErrorCode.COLLECT_BOOK_FORBIDDEN);
         }
 
         collectBook.updateVisibility(request.visibility());

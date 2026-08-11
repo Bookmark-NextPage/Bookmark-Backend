@@ -2,7 +2,6 @@ package com.example.bookmark.domain.record.entity;
 
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import com.example.bookmark.domain.collectBook.entity.Chapter;
-import com.example.bookmark.domain.record.entity.enums.RecordStatus;
 import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -49,6 +48,7 @@ public class Record {
     @Column(name = "ai_image_url", length = 500)
     private String aiImageUrl;
 
+    @Builder.Default
     @Column(nullable = false)
     private Long likes = 0L;
 

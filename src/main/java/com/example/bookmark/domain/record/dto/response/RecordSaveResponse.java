@@ -2,7 +2,6 @@ package com.example.bookmark.domain.record.dto.response;
 
 import com.example.bookmark.domain.record.entity.Record;
 import com.example.bookmark.domain.record.entity.RecordImage;
-import com.example.bookmark.domain.record.entity.enums.RecordStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,7 +39,6 @@ public class RecordSaveResponse {
                 .keywordIds(record.getRecordKeywords().stream()
                         .map(rk -> rk.getKeyword().getId())
                         .toList())
-                .isDraft(record.getStatus() == RecordStatus.DRAFT)
                 .createdAt(record.getCreatedAt())
                 .build();
     }

@@ -49,19 +49,22 @@ public class User {
     @JoinColumn(name = "board_theme_id")
     private BoardTheme boardTheme;
 
-    @Column(name = "ai_use", nullable = false)
-    private Boolean aiUse;
+    // 1. 자바 필드 기본값 true 설정 + DB default 설정 추가
+    @Column(name = "ai_use", nullable = false, columnDefinition = "boolean default true")
+    private Boolean aiUse = true;
 
     public void changeBoardTheme(BoardTheme boardTheme) {
         this.boardTheme = boardTheme;
     }
 
+    // 2. Builder 생성자에 aiUse 파라미터를 받고, null일 경우 true가 들어가도록 처리
     @Builder
-    public User(String name, String loginId, String email, String password) {
+    public User(String name, String loginId, String email, String password, Boolean aiUse) {
         this.name = name;
         this.loginId = loginId;
         this.email = email;
         this.password = password;
+        this.aiUse = (aiUse != null) ? aiUse : true;
     }
 
     // 프로필 편집
