@@ -5,16 +5,14 @@ import com.example.bookmark.common.response.ErrorCode;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketMoveRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketWriteRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.CategoryRequest;
-import com.example.bookmark.domain.bucketBoard.dto.response.BoardResponse;
-import com.example.bookmark.domain.bucketBoard.dto.response.BucketMoveResponse;
-import com.example.bookmark.domain.bucketBoard.dto.response.CategoryResponse;
-import com.example.bookmark.domain.bucketBoard.dto.response.MemoResponse;
+import com.example.bookmark.domain.bucketBoard.dto.response.*;
 import com.example.bookmark.domain.bucketBoard.entity.BoardTheme;
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import com.example.bookmark.domain.bucketBoard.entity.MemoCategory;
 import com.example.bookmark.domain.bucketBoard.entity.MemoDesign;
 import com.example.bookmark.domain.bucketBoard.entity.enums.MemoState;
 import com.example.bookmark.domain.bucketBoard.exception.BucketBoardErrorCode;
+import com.example.bookmark.domain.bucketBoard.repository.BoardThemeRepository;
 import com.example.bookmark.domain.bucketBoard.repository.BucketBoardMemoRepository;
 import com.example.bookmark.domain.bucketBoard.repository.MemoCategoryRepository;
 import com.example.bookmark.domain.bucketBoard.repository.MemoDesignRepository;
@@ -38,6 +36,7 @@ public class BucketBoardService {
     private final BucketBoardMemoRepository bucketBoardMemoRepository;
     private final MemoCategoryRepository memoCategoryRepository;
     private final MemoDesignRepository memoDesignRepository;
+    private final BoardThemeRepository boardThemeRepository;
 
     public BoardResponse getBoard(Long categoryId, Long userId) {
         User user  = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
@@ -268,6 +267,59 @@ public class BucketBoardService {
         MemoCategory category = memoCategoryRepository.save(newCategory);
 
         return CategoryResponse.of(category.getMemoCategoryId(), category.getCategoryName());
+    }
+
+    public BoardThemesResponse getBoardThemes(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        BoardTheme selectedTheme = user.getBoardTheme();
+        if (selectedTheme == null) {
+            throw new CustomException(BucketBoardErrorCode.THEME_NOT_FOUND);
+        }
+
+        List<BoardTheme> boardThemes =
+                boardThemeRepository.findAllWithMemoDesigns();
+
+        return BoardThemesResponse.of(
+                selectedTheme.getBoardThemeId(),
+                boardThemes
+        );
+    }
+
+    @Transactional
+    public Long selectBoardThemes(Long userId, Long boardThemeId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        BoardTheme currentTheme = user.getBoardTheme();
+
+        BoardTheme newTheme = boardThemeRepository.findById(boardThemeId)
+                .orElseThrow(() -> new CustomException(BucketBoardErrorCode.THEME_NOT_FOUND));
+
+        if (currentTheme != null
+                && currentTheme.getBoardThemeId().equals(newTheme.getBoardThemeId())) {
+            throw new CustomException(BucketBoardErrorCode.BOARD_THEME_ALREADY_SELECTED);
+        }
+
+        // 새 테마에 속한 첫 번째 메모지 디자인
+        MemoDesign firstNewMemoDesign = memoDesignRepository
+                .findFirstByBoardTheme_BoardThemeIdOrderByMemoDesignIdAsc(newTheme.getBoardThemeId())
+                .orElseThrow(() -> new CustomException(BucketBoardErrorCode.MEMO_DESIGN_NOT_FOUND));
+
+        // 기존 테마의 메모지 디자인을 사용 중인 PLAN 메모만 조회
+        if (currentTheme != null) {
+            List<BucketBoardMemo> planMemos = bucketBoardMemoRepository.findAllByUserIdAndStateAndBoardThemeId(
+                            userId,
+                            MemoState.PLAN,
+                            currentTheme.getBoardThemeId());
+
+            planMemos.forEach(memo -> memo.changeMemoDesign(firstNewMemoDesign));
+        }
+
+        user.changeBoardTheme(newTheme);
+
+        return newTheme.getBoardThemeId();
     }
 
 }

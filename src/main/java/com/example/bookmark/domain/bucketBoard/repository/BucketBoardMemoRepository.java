@@ -35,6 +35,20 @@ public interface BucketBoardMemoRepository extends JpaRepository<BucketBoardMemo
             @Param("categoryId") Long categoryId);
 
 
+    @Query("""
+    select m
+    from BucketBoardMemo m
+    join m.memoDesign d
+    where m.user.id = :userId
+      and m.state = :state
+      and d.boardTheme.boardThemeId = :boardThemeId
+    """)
+    List<BucketBoardMemo> findAllByUserIdAndStateAndBoardThemeId(
+            @Param("userId") Long userId,
+            @Param("state") MemoState state,
+            @Param("boardThemeId") Long boardThemeId
+    );
+
 //    @Query("""
 //    select distinct m
 //    from BucketBoardMemo m

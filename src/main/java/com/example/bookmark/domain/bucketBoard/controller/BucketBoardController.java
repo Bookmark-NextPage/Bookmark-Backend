@@ -3,10 +3,7 @@ package com.example.bookmark.domain.bucketBoard.controller;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketMoveRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketWriteRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.CategoryRequest;
-import com.example.bookmark.domain.bucketBoard.dto.response.BoardResponse;
-import com.example.bookmark.domain.bucketBoard.dto.response.BucketMoveResponse;
-import com.example.bookmark.domain.bucketBoard.dto.response.CategoryResponse;
-import com.example.bookmark.domain.bucketBoard.dto.response.MemoResponse;
+import com.example.bookmark.domain.bucketBoard.dto.response.*;
 import com.example.bookmark.domain.bucketBoard.service.BucketBoardService;
 import com.example.bookmark.global.auth.LoginUserId;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,7 +69,7 @@ public class BucketBoardController {
             description = ""
     )
     @DeleteMapping("/deleteBucket/{bucketId}")
-    public ResponseEntity deleteBucket(
+    public ResponseEntity<?> deleteBucket(
             @LoginUserId Long userId,
             @RequestParam Long bucketId
     ){
@@ -85,7 +82,7 @@ public class BucketBoardController {
             description = ""
     )
     @PatchMapping("/completeBucket/{bucketId}")
-    public ResponseEntity completeBucket(
+    public ResponseEntity<?> completeBucket(
             @LoginUserId Long userId,
             @RequestParam Long bucketId
     ){
@@ -131,5 +128,32 @@ public class BucketBoardController {
         CategoryResponse response = bucketBoardService.createCategory(userId, request);
         return ResponseEntity.ok(response);
     }
+
+    @Operation(
+            summary = "보드 테마 목록 가져오기",
+            description = ""
+    )
+    @GetMapping("/getBoardThemes")
+    public ResponseEntity<BoardThemesResponse> getBoardThemes(
+            @LoginUserId Long userId
+    ){
+        BoardThemesResponse response = bucketBoardService.getBoardThemes(userId);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "보드 테마 선택하기",
+            description = ""
+    )
+    @PatchMapping("/selectBoardThemes/{boardThemeId}")
+    public ResponseEntity<?> selectBoardThemes(
+            @LoginUserId Long userId,
+            @RequestParam Long boardThemeId
+    ){
+        bucketBoardService.selectBoardThemes(userId, boardThemeId);
+        return ResponseEntity.ok("테마가 성공적으로 변경되었습니다.");
+    }
+
+
 
 }

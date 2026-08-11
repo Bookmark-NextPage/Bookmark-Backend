@@ -18,6 +18,7 @@ public enum BucketBoardErrorCode implements BaseCode {
     CANNOT_MODIFY_DEFAULT_CATEGORY(HttpStatus.BAD_REQUEST, "BOARD4007", "기본 카테고리는 수정하거나 삭제할 수 없습니다."),
     MEMO_ALREADY_COMPLETED(HttpStatus.BAD_REQUEST, "BOARD4008", "이미 완료 처리된 메모입니다."),
     MEMO_ALREADY_SCRAPPED(HttpStatus.BAD_REQUEST, "BOARD4009", "이미 콜렉트북에 기록된 메모입니다."),
+    BOARD_THEME_ALREADY_SELECTED(HttpStatus.BAD_REQUEST, "BOARD4010", "이미 선택되어 있는 테마입니다."),
 
     // 403
     NOT_OWN_MEMO(HttpStatus.FORBIDDEN, "BOARD4031", "본인의 메모만 접근할 수 있습니다."),
