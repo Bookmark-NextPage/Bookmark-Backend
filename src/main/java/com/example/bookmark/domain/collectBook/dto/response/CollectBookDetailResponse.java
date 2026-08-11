@@ -5,9 +5,11 @@ import com.example.bookmark.domain.collectBook.entity.CollectBook;
 import com.example.bookmark.domain.collectBook.entity.enums.BookColor;
 import com.example.bookmark.domain.collectBook.entity.enums.ChapterType;
 import com.example.bookmark.domain.collectBook.entity.enums.Visibility;
+import com.example.bookmark.domain.record.entity.Record;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
+import java.util.Map;
 
 @Schema(description = "콜렉트북 상세 조회 응답 DTO")
 public record CollectBookDetailResponse(
@@ -32,9 +34,12 @@ public record CollectBookDetailResponse(
         @Schema(description = "챕터 목록")
         List<ChapterResponse> chapters
 ) {
-    public static CollectBookDetailResponse from(CollectBook collectBook) {
+    public static CollectBookDetailResponse of(CollectBook collectBook, Map<Long, List<Record>> recordMapByChapter) {
         List<ChapterResponse> chapterResponses = collectBook.getChapters().stream()
-                .map(ChapterResponse::from)
+                .map(chapter -> {
+                    List<Record> records = recordMapByChapter.getOrDefault(chapter.getId(), List.of());
+                    return ChapterResponse.of(chapter, records);
+                })
                 .toList();
 
         return new CollectBookDetailResponse(
@@ -59,19 +64,63 @@ public record CollectBookDetailResponse(
             @Schema(description = "챕터 이름", example = "11월 · 행운을 빌어줘")
             String name,
 
-            @Schema(description = "해당 챕터에 포함된 기록/버킷 개수", example = "3")
-            Long recordCount
+            @Schema(description = "해당 챕터에 포함된 기록 개수", example = "3")
+            Long recordCount,
+
+            @Schema(description = "해당 챕터에 포함된 기록 목록")
+            List<RecordSummaryResponse> records
     ) {
-        public static ChapterResponse from(Chapter chapter) {
-            // TODO: 기록(Record) 엔티티 및 연관관계 완성 시 실제 개수를 집계하여 전달
-            // 현재는 UI 와이어프레임 구조에 맞춰 0L 기본값으로 응답
-            Long count = 0L;
+        public static ChapterResponse of(Chapter chapter, List<Record> records) {
+            List<RecordSummaryResponse> recordSummaries = records.stream()
+                    .map(RecordSummaryResponse::from)
+                    .toList();
 
             return new ChapterResponse(
                     chapter.getId(),
                     chapter.getSequence(),
                     chapter.getName(),
-                    count
+                    (long) records.size(),
+                    recordSummaries
+            );
+        }
+    }
+
+    @Schema(description = "챕터 내 기록 요약 응답 DTO")
+    public record RecordSummaryResponse(
+            @Schema(description = "기록 ID", example = "101")
+            Long recordId,
+
+            @Schema(description = "기록 제목", example = "교토 단풍 시즌에 혼자 여행 가기")
+            String title,
+
+            @Schema(description = "기록 내용 요약", example = "3박 4일 내내 걸었다. 처음으로 여행이 안 무서웠다.")
+            String content,
+
+            @Schema(description = "대표 이미지 URL", example = "https://s3.bucket.com/image.jpg")
+            String imageUrl,
+
+            @Schema(description = "키워드/태그 목록", example = "[\"도전\", \"여행\"]")
+            List<String> keywords
+    ) {
+        public static RecordSummaryResponse from(Record record) {
+            // 대표 이미지: AI 생성 이미지가 있으면 우선 사용, 없으면 업로드된 첫 번째 일반 이미지 사용
+            String mainImage = record.getAiImageUrl();
+            if (mainImage == null && record.getImages() != null && !record.getImages().isEmpty()) {
+                mainImage = record.getImages().get(0).getImageUrl();
+            }
+
+            // 키워드 이름 리스트 추출
+            List<String> keywordList = record.getRecordKeywords() != null ?
+                    record.getRecordKeywords().stream()
+                            .map(rk -> rk.getKeyword().getName())
+                            .toList() : List.of();
+
+            return new RecordSummaryResponse(
+                    record.getId(),
+                    record.getTitle(),
+                    record.getContent(),
+                    mainImage,
+                    keywordList
             );
         }
     }

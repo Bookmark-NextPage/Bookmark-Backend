@@ -21,6 +21,7 @@ public enum RecordErrorCode implements BaseCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER404_1", "존재하지 않는 회원입니다."),
     MEMO_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMO404_1", "존재하지 않는 버킷보드 메모입니다."),
     FRIENDSHIP_REQUIRED(HttpStatus.FORBIDDEN, "FRIEND403_1", "친구 관계인 유저만 댓글 및 좋아요를 남길 수 있습니다."),
+    KEYWORD_NOT_FOUND(HttpStatus.NOT_FOUND, "KEYWORD404_1", "존재하지 않는 키워드(태그)가 포함되어 있습니다."),
 
     // AI 이미지 생성 관련
     AI_RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AI429_1", "AI 이미지 생성은 하루에 최대 10회까지만 이용 가능합니다."),
