@@ -19,8 +19,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     // 토큰 없이 접근 가능한 경로
     private static final List<String> WHITELIST = List.of(
-            "/api/v1/user/signup",
-            "/api/v1/user/login",
+            "/api/user/signup",
+            "/api/user/login",
             "/swagger-ui",
             "/v3/api-docs",
             "/swagger-resources"
@@ -31,6 +31,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            chain.doFilter(request, response);
+            return;
+        }
 
         if (isWhitelisted(request.getRequestURI())) {
             chain.doFilter(request, response);

@@ -22,7 +22,7 @@ import java.util.List;
 
 @Tag(name = "CollectBook", description = "콜렉트북 API")
 @RestController
-@RequestMapping("/api/v1/collect-books")
+@RequestMapping("/api/collect-books")
 @RequiredArgsConstructor
 public class CollectBookController {
 
