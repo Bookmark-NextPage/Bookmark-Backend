@@ -17,11 +17,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// 생성/수정 시점을 자동으로 기록함.
+@EntityListeners(AuditingEntityListener.class)
 @Entity
 @Table(name = "collect_book")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
 public class CollectBook {
 
     @Id
@@ -29,7 +30,6 @@ public class CollectBook {
     @Column(name = "collect_book_id")
     private Long id;
 
-    // ✨ User FK 연관관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

@@ -32,9 +32,10 @@ public class Record {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chapter_id")
+    @JoinColumn(name = "chapter_id", nullable = false)
     private Chapter chapter;
 
+    // 메모지 기반 X인 경우 해당 컬럼 Null
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bucket_board_memo_id")
     private BucketBoardMemo bucketBoardMemo;
@@ -51,10 +52,6 @@ public class Record {
     @Column(nullable = false)
     private Long likes = 0L;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RecordStatus status;
-
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -68,22 +65,20 @@ public class Record {
     private List<RecordKeyword> recordKeywords = new ArrayList<>();
 
     @Builder
-    public Record(User user, Chapter chapter, BucketBoardMemo bucketBoardMemo, String title, String content, String aiImageUrl, RecordStatus status) {
+    public Record(User user, Chapter chapter, BucketBoardMemo bucketBoardMemo, String title, String content, String aiImageUrl) {
         this.user = user;
         this.chapter = chapter;
         this.bucketBoardMemo = bucketBoardMemo;
         this.title = title;
         this.content = content;
         this.aiImageUrl = aiImageUrl;
-        this.status = status;
         this.likes = 0L;
     }
 
-    public void updateRecord(Chapter chapter, String title, String content, RecordStatus status) {
+    public void updateRecord(Chapter chapter, String title, String content) {
         this.chapter = chapter;
         this.title = title;
         this.content = content;
-        this.status = status;
     }
 
     public void updateAiImageUrl(String aiImageUrl) {
@@ -95,13 +90,9 @@ public class Record {
         image.assignRecord(this);
     }
 
+    // 작성된 기록 안에 사용된 키워드 추가
     public void addRecordKeyword(RecordKeyword recordKeyword) {
         this.recordKeywords.add(recordKeyword);
         recordKeyword.assignRecord(this);
-    }
-
-    public void clearImagesAndKeywords() {
-        this.images.clear();
-        this.recordKeywords.clear();
     }
 }
