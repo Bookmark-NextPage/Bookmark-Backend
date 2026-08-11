@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RecordRepository extends JpaRepository<Record, Long> {
+    // 챕터 ID 목록에 포함된 모든 기록을 ID 내림차순(최신순)으로 조회
+    List<Record> findAllByChapterIdInOrderByIdDesc(List<Long> chapterIds);
 
     long countByUser_Id(Long userId);
 

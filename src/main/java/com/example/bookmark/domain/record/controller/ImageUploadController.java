@@ -14,7 +14,7 @@ import java.util.List;
 
 @Tag(name = "Record API", description = "콜렉트북 기록 API")
 @RestController
-@RequestMapping("/api/v1/images")
+@RequestMapping("/api/images")
 @RequiredArgsConstructor
 public class ImageUploadController {
 

@@ -22,9 +22,7 @@ public class ExternalAiService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String generateScrapbookImage(String prompt) {
-        String url = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=" + apiKey;
-
-        HttpHeaders headers = new HttpHeaders();
+        String url = "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=" + apiKey;        HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, Object> requestBody = new HashMap<>();
