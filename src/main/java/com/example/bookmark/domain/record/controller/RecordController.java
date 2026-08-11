@@ -15,30 +15,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Record API", description = "콜렉트북 기록 및 임시저장 API")
+@Tag(name = "Record API", description = "콜렉트북 기록 API")
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
 public class RecordController {
 
     private final RecordService recordService;
-
-    @Operation(summary = "기록 임시 저장", description = "입력 값이 완벽하지 않아도 작성 중인 내용을 임시 저장합니다.")
-    @PostMapping("/records")
-    public ResponseEntity<RecordSaveResponse> saveDraft(
-            @LoginUserId Long userId,
-            @RequestBody RecordDraftSaveRequest request
-    ) {
-        return ResponseEntity.ok(recordService.saveDraft(userId, request));
-    }
-
-    @Operation(summary = "최근 임시 저장 조회", description = "가장 최근에 작성하다가 임시 저장된 기록 1건을 조회합니다.")
-    @GetMapping("/records/drafts/latest")
-    public ResponseEntity<RecordSaveResponse> getLatestDraft(
-            @LoginUserId Long userId
-    ) {
-        return ResponseEntity.ok(recordService.getLatestDraft(userId));
-    }
 
     @Operation(summary = "콜렉트북에 기록 생성 - 메모지 기반X", description = "콜렉트북 안의 챕터 내에서 기록 생성 버튼을 통해 최종 저장합니다.")
     @PostMapping("/collect-books/{collectBookId}/chapters/{chapterId}/records")
