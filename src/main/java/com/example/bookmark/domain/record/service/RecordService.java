@@ -202,8 +202,14 @@ public class RecordService {
                 record.addImage(RecordImage.builder().imageUrl(url).imageSeq(seq++).build());
             }
         }
+
         if (keywordIds != null && !keywordIds.isEmpty()) {
             List<Keyword> keywords = keywordRepository.findAllById(keywordIds);
+
+            if (keywords.size() != keywordIds.size()) {
+                throw new CustomException(RecordErrorCode.KEYWORD_NOT_FOUND);
+            }
+
             for (Keyword keyword : keywords) {
                 record.addRecordKeyword(RecordKeyword.builder().keyword(keyword).build());
             }
