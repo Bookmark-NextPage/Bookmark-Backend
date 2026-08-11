@@ -1,13 +1,11 @@
 package com.example.bookmark.domain.bucketBoard.entity;
 
-import com.example.bookmark.global.BaseTimeEntity;
+import com.example.bookmark.common.entity.BaseTimeEntity;
+import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Entity
@@ -18,11 +16,11 @@ public class MemoCategory extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "memo_category_id")
-    private Long MemoCategoryId;
+    private Long memoCategoryId;
 
-    // TODO: 유저 연결 필요!
-    @Column(name = "user_id")
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // nullable: 기본 카테고리는 null
+    private User user;
 
     @Column(name = "category_name", nullable = false, length = 20)
     private String categoryName;

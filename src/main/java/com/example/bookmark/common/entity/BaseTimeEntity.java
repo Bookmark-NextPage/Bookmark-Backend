@@ -1,4 +1,4 @@
-package com.example.bookmark.global;
+package com.example.bookmark.common.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
