@@ -25,7 +25,11 @@ public class BoardTheme {
     @Column(name = "theme_image_url", nullable = false)
     private String themeImageUrl;
 
-//    @OneToMany(mappedBy = "boardTheme")
-//    private List<MemoDesign> memoDesigns = new ArrayList<>();
+    @Column(name = "font", length = 50, nullable = false)
+    private String font;
+
+    @OneToMany(mappedBy = "boardTheme")
+    @OrderBy("memoDesignId ASC")
+    private List<MemoDesign> memoDesigns = new ArrayList<>();
 
 }

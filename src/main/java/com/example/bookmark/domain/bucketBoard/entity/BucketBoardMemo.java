@@ -1,12 +1,12 @@
 package com.example.bookmark.domain.bucketBoard.entity;
 
 import com.example.bookmark.domain.bucketBoard.entity.enums.MemoState;
-import com.example.bookmark.global.BaseTimeEntity;
+import com.example.bookmark.common.entity.BaseTimeEntity;
+import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Getter
 @Entity
@@ -17,11 +17,11 @@ public class BucketBoardMemo extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "bucket_board_memo_id")
-    private Long BucketBoardMemoId;
+    private Long bucketBoardMemoId;
 
-    // TODO: 유저 연결 필요!
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, unique = true) // nullable: 기본 카테고리는 null
+    private User user;
 
     @Column(name = "content", nullable = false)
     private String content;

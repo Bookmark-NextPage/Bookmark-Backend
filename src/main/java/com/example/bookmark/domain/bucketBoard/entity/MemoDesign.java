@@ -15,16 +15,13 @@ public class MemoDesign {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "memo_design_id")
-    private Long MemoDesignId;
+    private Long memoDesignId;
 
     @Column(name = "memo_image_url", nullable = false)
-    private String MemoImageUrl;
+    private String memoImageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_theme_id", nullable = false)
     private BoardTheme boardTheme;
-
-    @Column(name = "font", length = 50, nullable = false)
-    private String font;
 
 }

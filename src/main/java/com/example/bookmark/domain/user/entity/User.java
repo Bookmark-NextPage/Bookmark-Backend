@@ -1,5 +1,6 @@
 package com.example.bookmark.domain.user.entity;
 
+import com.example.bookmark.domain.bucketBoard.entity.BoardTheme;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -43,6 +44,14 @@ public class User {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_theme_id")
+    private BoardTheme boardTheme;
+
+    public void changeBoardTheme(BoardTheme boardTheme) {
+        this.boardTheme = boardTheme;
+    }
 
     @Builder
     public User(String name, String loginId, String email, String password) {

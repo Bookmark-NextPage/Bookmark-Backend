@@ -1,5 +1,6 @@
 package com.example.bookmark.domain.user.service;
 
+import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import com.example.bookmark.domain.user.dto.request.SignupRequest;
 import com.example.bookmark.domain.user.dto.response.SignupResponse;
 import com.example.bookmark.domain.user.entity.User;
