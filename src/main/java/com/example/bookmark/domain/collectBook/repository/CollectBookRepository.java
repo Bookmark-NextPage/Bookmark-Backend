@@ -31,4 +31,6 @@ public interface CollectBookRepository extends JpaRepository<CollectBook, Long> 
 
     // 회원탈퇴 시 삭제
     void deleteAllByUserId(Long userId);
+
+    long countByUser_Id(Long userId);
 }
