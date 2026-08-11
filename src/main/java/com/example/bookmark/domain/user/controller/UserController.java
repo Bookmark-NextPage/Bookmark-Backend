@@ -48,19 +48,10 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "친구 마이페이지 조회", description = "userId로 해당 유저의 마이페이지를 조회합니다. 책 목록은 조회자와의 관계에 따라 공개 범위가 필터링됩니다.")
-    @GetMapping("/{userId}/mypage")
-    public ResponseEntity<MyPageResponse> getMyPage(
-            @LoginUserId Long viewerId,
-            @PathVariable Long userId
-    ) {
-        return ResponseEntity.ok(myPageService.getMyPage(viewerId, userId));
-    }
-
-    @Operation(summary = "내 마이페이지 조회", description = "로그인한 본인의 마이페이지를 조회합니다.")
+    @Operation(summary = "마이페이지 조회", description = "로그인한 본인의 마이페이지를 조회합니다.")
     @GetMapping("/me/mypage")
-    public ResponseEntity<MyPageResponse> getMyMyPage(@LoginUserId Long meId) {
-        return ResponseEntity.ok(myPageService.getMyPage(meId, meId));
+    public ResponseEntity<MyPageResponse> getMyPage(@LoginUserId Long userId) {
+        return ResponseEntity.ok(myPageService.getMyPage(userId));
     }
 
     @Operation(summary = "프로필 편집", description = "프로필 사진, 이름, 한줄소개를 수정합니다.")

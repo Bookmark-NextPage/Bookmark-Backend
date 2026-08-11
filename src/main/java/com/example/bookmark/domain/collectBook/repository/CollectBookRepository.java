@@ -25,6 +25,10 @@ public interface CollectBookRepository extends JpaRepository<CollectBook, Long> 
     List<CollectBook> findTop5ByUserIdAndVisibilityInOrderByCreatedAtDesc(
             Long userId, java.util.Collection<Visibility> visibilities);
 
+    // 친구 책장: 특정 유저의 공개 범위별 콜렉트북 (연도 내림차순)
+    List<CollectBook> findByUserIdAndVisibilityInOrderByYearDesc(
+            Long userId, java.util.Collection<Visibility> visibilities);
+
     // 회원탈퇴 시 삭제
     void deleteAllByUserId(Long userId);
 }
