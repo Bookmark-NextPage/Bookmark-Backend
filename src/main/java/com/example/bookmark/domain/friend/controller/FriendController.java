@@ -1,6 +1,7 @@
 package com.example.bookmark.domain.friend.controller;
 
 import com.example.bookmark.domain.friend.dto.request.FriendAddRequest;
+import com.example.bookmark.domain.friend.dto.response.FriendPageResponse;
 import com.example.bookmark.domain.friend.dto.response.FriendRequestResponse;
 import com.example.bookmark.domain.friend.dto.response.UserSummaryResponse;
 import com.example.bookmark.domain.friend.service.FriendService;
@@ -82,5 +83,14 @@ public class FriendController {
     ) {
         friendService.rejectRequest(meId, requestId);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "친구 페이지 조회", description = "친구의 프로필과 공개해둔 콜렉트북을 조회합니다. (친구만 가능)")
+    @GetMapping("/{friendUserId}/page")
+    public ResponseEntity<FriendPageResponse> getFriendPage(
+            @LoginUserId Long meId,
+            @PathVariable Long friendUserId
+    ) {
+        return ResponseEntity.ok(friendService.getFriendPage(meId, friendUserId));
     }
 }
