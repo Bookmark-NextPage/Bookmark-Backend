@@ -8,6 +8,8 @@ import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import java.util.List;
 
 public record BucketWriteRequest(
-
+    String content,
+    Long categoryId,
+    Long memoDesignId
 ) {
 }

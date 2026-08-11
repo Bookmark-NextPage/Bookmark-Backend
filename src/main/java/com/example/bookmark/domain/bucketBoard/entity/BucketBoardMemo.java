@@ -5,8 +5,10 @@ import com.example.bookmark.common.entity.BaseTimeEntity;
 import com.example.bookmark.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
 
 @Getter
 @Entity
@@ -46,5 +48,43 @@ public class BucketBoardMemo extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "memo_category_id", nullable = false)
     private MemoCategory memoCategory;
+
+    @Builder
+    public BucketBoardMemo(
+            User user,
+            MemoCategory memoCategory,
+            MemoDesign memoDesign,
+            String content,
+            MemoState state,
+            boolean scrapBook,
+            Double xPos,
+            Double yPos
+    ) {
+        this.user = user;
+        this.memoCategory = memoCategory;
+        this.memoDesign = memoDesign;
+        this.content = content;
+        this.state = state;
+        this.scrapBook = scrapBook;
+        this.x = xPos;
+        this.y = yPos;
+    }
+
+    public void update(
+            String content,
+            MemoCategory memoCategory
+    ) {
+        this.content = content;
+        this.memoCategory = memoCategory;
+    }
+
+    public void complete() {
+        this.state = MemoState.COMPLETE;
+    }
+
+    public void move(Double x, Double y) {
+        this.x = x;
+        this.y = y;
+    }
 
 }
