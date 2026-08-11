@@ -1,7 +1,9 @@
 package com.example.bookmark.domain.bucketBoard.controller;
 
+import com.example.bookmark.domain.bucketBoard.dto.request.BucketMoveRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketWriteRequest;
 import com.example.bookmark.domain.bucketBoard.dto.response.BoardResponse;
+import com.example.bookmark.domain.bucketBoard.dto.response.BucketMoveResponse;
 import com.example.bookmark.domain.bucketBoard.dto.response.MemoResponse;
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import com.example.bookmark.domain.bucketBoard.service.BucketBoardService;
@@ -53,7 +55,7 @@ public class BucketBoardController {
             summary = "버킷 수정하기",
             description = ""
     )
-    @PutMapping("/updateBucket")
+    @PutMapping("/updateBucket/{bucketId}")
     public ResponseEntity<MemoResponse> updateBucket(
             @LoginUserId Long userId,
             @RequestBody BucketWriteRequest request,
@@ -67,7 +69,7 @@ public class BucketBoardController {
             summary = "버킷 삭제하기",
             description = ""
     )
-    @DeleteMapping("/deleteBucket")
+    @DeleteMapping("/deleteBucket/{bucketId}")
     public ResponseEntity deleteBucket(
             @LoginUserId Long userId,
             @RequestParam Long bucketId
@@ -75,5 +77,33 @@ public class BucketBoardController {
         Long result = bucketBoardService.deleteBucket(userId, bucketId);
         return ResponseEntity.ok(result);
     }
+
+    @Operation(
+            summary = "버킷 완료하기",
+            description = ""
+    )
+    @PatchMapping("/completeBucket/{bucketId}")
+    public ResponseEntity completeBucket(
+            @LoginUserId Long userId,
+            @RequestParam Long bucketId
+    ){
+        Long result = bucketBoardService.completeBucket(userId, bucketId);
+        return ResponseEntity.ok(result);
+    }
+
+    @Operation(
+            summary = "버킷 이동하기",
+            description = ""
+    )
+    @PatchMapping("/moveBucket/{bucketId}")
+    public ResponseEntity<BucketMoveResponse> moveBucket(
+            @LoginUserId Long userId,
+            @RequestParam Long bucketId,
+            @RequestBody BucketMoveRequest request
+    ){
+        BucketMoveResponse response = bucketBoardService.moveBucket(userId, bucketId, request);
+        return ResponseEntity.ok(response);
+    }
+
 
 }

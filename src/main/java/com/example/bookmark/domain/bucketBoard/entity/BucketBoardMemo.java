@@ -72,11 +72,19 @@ public class BucketBoardMemo extends BaseTimeEntity {
 
     public void update(
             String content,
-            MemoCategory memoCategory,
-            MemoDesign memoDesign
+            MemoCategory memoCategory
     ) {
         this.content = content;
         this.memoCategory = memoCategory;
-        this.memoDesign = memoDesign;
     }
+
+    public void complete() {
+        this.state = MemoState.COMPLETE;
+    }
+
+    public void move(Double x, Double y) {
+        this.x = x;
+        this.y = y;
+    }
+
 }

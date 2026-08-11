@@ -2,8 +2,10 @@ package com.example.bookmark.domain.bucketBoard.service;
 
 import com.example.bookmark.common.exception.CustomException;
 import com.example.bookmark.common.response.ErrorCode;
+import com.example.bookmark.domain.bucketBoard.dto.request.BucketMoveRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketWriteRequest;
 import com.example.bookmark.domain.bucketBoard.dto.response.BoardResponse;
+import com.example.bookmark.domain.bucketBoard.dto.response.BucketMoveResponse;
 import com.example.bookmark.domain.bucketBoard.dto.response.MemoResponse;
 import com.example.bookmark.domain.bucketBoard.entity.BoardTheme;
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
@@ -139,16 +141,16 @@ public class BucketBoardService {
             throw new CustomException(BucketBoardErrorCode.NOT_OWN_CATEGORY);
         }
 
-        MemoDesign memoDesign = memoDesignRepository.findById(request.memoDesignId())
-                .orElseThrow(() -> new CustomException(BucketBoardErrorCode.MEMO_DESIGN_NOT_FOUND));
+//        MemoDesign memoDesign = memoDesignRepository.findById(request.memoDesignId())
+//                .orElseThrow(() -> new CustomException(BucketBoardErrorCode.MEMO_DESIGN_NOT_FOUND));
+//
+//        // 현재 유저 테마에 속한 메모지인지 확인
+//        if (!memoDesign.getBoardTheme().getBoardThemeId()
+//                .equals(memo.getUser().getBoardTheme().getBoardThemeId())) {
+//            throw new CustomException(BucketBoardErrorCode.DESIGN_NOT_IN_THEME);
+//        }
 
-        // 현재 유저 테마에 속한 메모지인지 확인
-        if (!memoDesign.getBoardTheme().getBoardThemeId()
-                .equals(memo.getUser().getBoardTheme().getBoardThemeId())) {
-            throw new CustomException(BucketBoardErrorCode.DESIGN_NOT_IN_THEME);
-        }
-
-        memo.update(request.content(), category, memoDesign);
+        memo.update(request.content(), category);
 
         return MemoResponse.from(memo);
 
@@ -176,6 +178,54 @@ public class BucketBoardService {
         bucketBoardMemoRepository.delete(memo);
 
         return bucketId;
+    }
+
+    @Transactional
+    public Long completeBucket(Long userId, Long bucketId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        BucketBoardMemo memo = bucketBoardMemoRepository.findById(bucketId)
+                .orElseThrow(() -> new CustomException(
+                        BucketBoardErrorCode.BUCKET_BOARD_NOT_FOUND
+                ));
+
+        // 본인 메모인지 확인
+        if (!memo.getUser().getId().equals(user.getId())) {
+            throw new CustomException(BucketBoardErrorCode.NOT_OWN_MEMO);
+        }
+
+        if(memo.getState() == MemoState.COMPLETE) {
+            throw new CustomException(BucketBoardErrorCode.MEMO_ALREADY_COMPLETED);
+        }
+
+        memo.complete();
+
+        return bucketId;
+    }
+
+    @Transactional
+    public BucketMoveResponse moveBucket(Long userId, Long bucketId, BucketMoveRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        BucketBoardMemo memo = bucketBoardMemoRepository.findById(bucketId)
+                .orElseThrow(() -> new CustomException(
+                        BucketBoardErrorCode.BUCKET_BOARD_NOT_FOUND
+                ));
+
+        // 본인 메모인지 확인
+        if (!memo.getUser().getId().equals(user.getId())) {
+            throw new CustomException(BucketBoardErrorCode.NOT_OWN_MEMO);
+        }
+
+        if(memo.getState() == MemoState.COMPLETE) {
+            throw new CustomException(BucketBoardErrorCode.MEMO_ALREADY_COMPLETED);
+        }
+
+        memo.move(request.xPos(),  request.yPos());
+
+        return BucketMoveResponse.of(bucketId, request.xPos(),  request.yPos());
     }
 
 }
