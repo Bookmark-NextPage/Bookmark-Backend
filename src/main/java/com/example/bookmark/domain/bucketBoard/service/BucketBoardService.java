@@ -4,8 +4,10 @@ import com.example.bookmark.common.exception.CustomException;
 import com.example.bookmark.common.response.ErrorCode;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketMoveRequest;
 import com.example.bookmark.domain.bucketBoard.dto.request.BucketWriteRequest;
+import com.example.bookmark.domain.bucketBoard.dto.request.CategoryRequest;
 import com.example.bookmark.domain.bucketBoard.dto.response.BoardResponse;
 import com.example.bookmark.domain.bucketBoard.dto.response.BucketMoveResponse;
+import com.example.bookmark.domain.bucketBoard.dto.response.CategoryResponse;
 import com.example.bookmark.domain.bucketBoard.dto.response.MemoResponse;
 import com.example.bookmark.domain.bucketBoard.entity.BoardTheme;
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
@@ -23,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -226,6 +229,45 @@ public class BucketBoardService {
         memo.move(request.xPos(),  request.yPos());
 
         return BucketMoveResponse.of(bucketId, request.xPos(),  request.yPos());
+    }
+
+    public List<CategoryResponse> getCategory(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        List<MemoCategory> myCategories = memoCategoryRepository.findAllByUserId(userId);
+        List<MemoCategory> defaultCategories = memoCategoryRepository.findAllByDefaultCategory(true);
+
+        List<MemoCategory> categories = new ArrayList<>(defaultCategories);
+        categories.addAll(myCategories);
+
+        return categories.stream()
+                .map(category -> CategoryResponse.of(
+                        category.getMemoCategoryId(),
+                        category.getCategoryName()
+                ))
+                .toList();
+
+    }
+
+    @Transactional
+    public CategoryResponse createCategory(Long userId, CategoryRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        if(memoCategoryRepository.existsByCategoryNameAndUserId(request.categoryName(), userId)
+        || memoCategoryRepository.existsByCategoryNameAndDefaultCategory(request.categoryName(), true)) {
+            throw new CustomException(BucketBoardErrorCode.CATEGORY_NAME_DUPLICATED);
+        }
+
+        MemoCategory newCategory = MemoCategory.builder()
+                .user(user)
+                .categoryName(request.categoryName())
+                .build();
+
+        MemoCategory category = memoCategoryRepository.save(newCategory);
+
+        return CategoryResponse.of(category.getMemoCategoryId(), category.getCategoryName());
     }
 
 }

@@ -19,4 +19,11 @@ public interface MemoCategoryRepository extends JpaRepository<MemoCategory, Long
     """)
     List<MemoCategory> findAvailableCategories(@Param("userId") Long userId);
 
+    List<MemoCategory> findAllByUserId(Long userId);
+
+    List<MemoCategory> findAllByDefaultCategory(Boolean defaultCategory);
+
+    Boolean existsByCategoryNameAndUserId(String categoryName, Long userId);
+    Boolean existsByCategoryNameAndDefaultCategory(String categoryName, Boolean defaultCategory);
+
 }
