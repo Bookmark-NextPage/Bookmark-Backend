@@ -22,7 +22,7 @@ public class BucketBoardMemo extends BaseTimeEntity {
     private Long bucketBoardMemoId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true) // nullable: 기본 카테고리는 null
+    @JoinColumn(name = "user_id", nullable = false) // nullable: 기본 카테고리는 null
     private User user;
 
     @Column(name = "content", nullable = false)
@@ -85,6 +85,10 @@ public class BucketBoardMemo extends BaseTimeEntity {
     public void move(Double x, Double y) {
         this.x = x;
         this.y = y;
+    }
+
+    public void changeMemoDesign(MemoDesign memoDesign) {
+        this.memoDesign = memoDesign;
     }
 
 }
