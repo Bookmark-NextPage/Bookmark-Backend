@@ -49,6 +49,9 @@ public class User {
     @JoinColumn(name = "board_theme_id")
     private BoardTheme boardTheme;
 
+    @Column(name = "ai_use", nullable = false)
+    private Boolean aiUse;
+
     public void changeBoardTheme(BoardTheme boardTheme) {
         this.boardTheme = boardTheme;
     }
@@ -66,5 +69,10 @@ public class User {
         this.name = name;
         this.bio = bio;
         this.profileImageUrl = profileImageUrl;
+    }
+
+    // 설정 변경 메서드
+    public void updateAiUse(Boolean aiUse) {
+        this.aiUse = aiUse;
     }
 }
