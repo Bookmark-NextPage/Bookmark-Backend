@@ -139,6 +139,10 @@ public class RecordService {
     public void addLike(Long userId, Long recordId) {
         Record record = validateRecordAndFriendship(userId, recordId);
 
+        if (record.getUser().getId().equals(userId)) {
+            throw new CustomException(RecordErrorCode.CANNOT_LIKE_OWN_RECORD);
+        }
+
         if (recordLikeRepository.existsByRecordIdAndUserId(recordId, userId)) {
             throw new CustomException(RecordErrorCode.LIKE_ALREADY_EXISTS);
         }
