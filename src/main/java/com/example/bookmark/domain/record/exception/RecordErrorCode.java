@@ -23,6 +23,15 @@ public enum RecordErrorCode implements BaseCode {
     FRIENDSHIP_REQUIRED(HttpStatus.FORBIDDEN, "FRIEND403_1", "친구 관계인 유저만 댓글 및 좋아요를 남길 수 있습니다."),
     KEYWORD_NOT_FOUND(HttpStatus.NOT_FOUND, "KEYWORD404_1", "존재하지 않는 키워드(태그)가 포함되어 있습니다."),
 
+
+    // 태그(감성 키워드) 관련
+    TAG_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "TAG400_1", "태그는 최대 10개까지만 생성할 수 있습니다."),
+    DUPLICATE_TAG_NAME(HttpStatus.CONFLICT, "TAG409_1", "이미 존재하는 태그 이름입니다."),
+
+    // 이미지 업로드 관련
+    IMAGE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "IMAGE400_1", "이미지는 한 번에 최대 5장까지만 업로드할 수 있습니다."),
+    INVALID_IMAGE_EXTENSION(HttpStatus.BAD_REQUEST, "IMAGE400_2", "지원하지 않는 이미지 확장자입니다. (png, jpg, jpeg만 가능)"),
+
     // AI 이미지 생성 관련
     AI_RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS, "AI429_1", "AI 이미지 생성은 하루에 최대 10회까지만 이용 가능합니다."),
     AI_IMAGE_GENERATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI500_1", "AI 스크랩북 이미지 생성 도중 오류가 발생했습니다.");

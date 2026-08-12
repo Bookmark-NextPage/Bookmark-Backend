@@ -19,10 +19,7 @@ import com.example.bookmark.domain.record.dto.response.RecordSaveResponse;
 import com.example.bookmark.domain.record.entity.*;
 import com.example.bookmark.domain.record.entity.Record;
 import com.example.bookmark.domain.record.exception.RecordErrorCode;
-import com.example.bookmark.domain.record.repository.KeywordRepository;
-import com.example.bookmark.domain.record.repository.RecordCommentRepository;
-import com.example.bookmark.domain.record.repository.RecordLikeRepository;
-import com.example.bookmark.domain.record.repository.RecordRepository;
+import com.example.bookmark.domain.record.repository.*;
 import com.example.bookmark.domain.user.entity.User;
 import com.example.bookmark.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -47,17 +44,12 @@ public class RecordService {
     private final RecordCommentRepository recordCommentRepository;
     private final RecordLikeRepository recordLikeRepository;
 
-    // 1. 콜렉트북 기록 상세 조회
-    public RecordDetailResponse getRecordDetail(Long userId, Long collectBookId, Long recordId) {
-        CollectBook collectBook = collectBookRepository.findById(collectBookId)
-                .orElseThrow(() -> new CustomException(CollectBookErrorCode.COLLECT_BOOK_NOT_FOUND));
-
+    // 1. 콜렉트북 기록 상세 조회 (collectBookId 제거)
+    public RecordDetailResponse getRecordDetail(Long userId, Long recordId) {
         Record record = recordRepository.findById(recordId)
                 .orElseThrow(() -> new CustomException(RecordErrorCode.RECORD_NOT_FOUND));
 
-        if (record.getChapter() == null || !record.getChapter().getCollectBook().getId().equals(collectBookId)) {
-            throw new CustomException(RecordErrorCode.INVALID_RECORD_CHAPTER);
-        }
+        CollectBook collectBook = record.getChapter().getCollectBook();
 
         // 콜렉트북 공개 범위(Visibility) 검증
         validateCollectBookVisibility(userId, collectBook);
@@ -82,16 +74,14 @@ public class RecordService {
 
     // 2. 콜렉트북에 기록 생성 - 메모지 기반 X
     @Transactional
-    public RecordSaveResponse createCustomRecord(Long userId, Long collectBookId, Long chapterId, RecordCreateRequest request) {
-        CollectBook collectBook = collectBookRepository.findById(collectBookId)
-                .orElseThrow(() -> new CustomException(CollectBookErrorCode.COLLECT_BOOK_NOT_FOUND));
+    public RecordSaveResponse createCustomRecord(Long userId, Long chapterId, RecordCreateRequest request) {
+        Chapter targetChapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new CustomException(RecordErrorCode.CHAPTER_NOT_FOUND));
 
+        CollectBook collectBook = targetChapter.getCollectBook();
         if (!collectBook.getUser().getId().equals(userId)) {
             throw new CustomException(CollectBookErrorCode.COLLECT_BOOK_FORBIDDEN);
         }
-
-        Chapter targetChapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new CustomException(RecordErrorCode.CHAPTER_NOT_FOUND));
 
         return savePublishedRecord(userId, targetChapter, null, request);
     }
@@ -108,7 +98,7 @@ public class RecordService {
         return savePublishedRecord(userId, systemChapter, memo, request);
     }
 
-    // 기록 발행 공통 메서드 (신규 저장 전용)
+    // 기록 발행 공통 메서드
     private RecordSaveResponse savePublishedRecord(Long userId, Chapter chapter, BucketBoardMemo memo, RecordCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(RecordErrorCode.USER_NOT_FOUND));
@@ -127,10 +117,10 @@ public class RecordService {
         return RecordSaveResponse.from(savedRecord);
     }
 
-    // 4. 댓글 작성
+    // 4. 댓글 작성 (collectBookId 제거)
     @Transactional
-    public void createComment(Long userId, Long collectBookId, Long recordId, CommentCreateRequest request) {
-        Record record = validateRecordAndFriendship(userId, collectBookId, recordId);
+    public void createComment(Long userId, Long recordId, CommentCreateRequest request) {
+        Record record = validateRecordAndFriendship(userId, recordId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(RecordErrorCode.USER_NOT_FOUND));
@@ -144,10 +134,10 @@ public class RecordService {
         recordCommentRepository.save(comment);
     }
 
-    // 5. 좋아요 등록
+    // 5. 좋아요 등록 (collectBookId 제거)
     @Transactional
-    public void addLike(Long userId, Long collectBookId, Long recordId) {
-        Record record = validateRecordAndFriendship(userId, collectBookId, recordId);
+    public void addLike(Long userId, Long recordId) {
+        Record record = validateRecordAndFriendship(userId, recordId);
 
         if (recordLikeRepository.existsByRecordIdAndUserId(recordId, userId)) {
             throw new CustomException(RecordErrorCode.LIKE_ALREADY_EXISTS);
@@ -159,10 +149,10 @@ public class RecordService {
         recordLikeRepository.save(RecordLike.builder().record(record).user(user).build());
     }
 
-    // 6. 좋아요 취소 (삭제)
+    // 6. 좋아요 취소 (collectBookId 제거)
     @Transactional
-    public void deleteLike(Long userId, Long collectBookId, Long recordId) {
-        validateRecordAndFriendship(userId, collectBookId, recordId);
+    public void deleteLike(Long userId, Long recordId) {
+        validateRecordAndFriendship(userId, recordId);
 
         RecordLike recordLike = recordLikeRepository.findByRecordIdAndUserId(recordId, userId)
                 .orElseThrow(() -> new CustomException(RecordErrorCode.LIKE_NOT_FOUND));
@@ -235,16 +225,11 @@ public class RecordService {
         }
     }
 
-    private Record validateRecordAndFriendship(Long userId, Long collectBookId, Long recordId) {
-        CollectBook collectBook = collectBookRepository.findById(collectBookId)
-                .orElseThrow(() -> new CustomException(CollectBookErrorCode.COLLECT_BOOK_NOT_FOUND));
-
+    private Record validateRecordAndFriendship(Long userId, Long recordId) {
         Record record = recordRepository.findById(recordId)
                 .orElseThrow(() -> new CustomException(RecordErrorCode.RECORD_NOT_FOUND));
 
-        if (record.getChapter() == null || !record.getChapter().getCollectBook().getId().equals(collectBookId)) {
-            throw new CustomException(RecordErrorCode.INVALID_RECORD_CHAPTER);
-        }
+        CollectBook collectBook = record.getChapter().getCollectBook();
 
         validateCollectBookVisibility(userId, collectBook);
 

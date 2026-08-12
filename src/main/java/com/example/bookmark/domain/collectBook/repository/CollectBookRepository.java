@@ -33,4 +33,7 @@ public interface CollectBookRepository extends JpaRepository<CollectBook, Long> 
     void deleteAllByUserId(Long userId);
 
     long countByUser_Id(Long userId);
+
+    // 특정 유저, 특정 연도, 특정 타입(SYSTEM)의 콜렉트북 존재 여부 확인
+    boolean existsByUserIdAndYearAndCollectBookType(Long userId, Integer year, CollectBookType collectBookType);
 }

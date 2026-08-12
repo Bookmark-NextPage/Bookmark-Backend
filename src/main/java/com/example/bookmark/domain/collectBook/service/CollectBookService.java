@@ -86,7 +86,7 @@ public class CollectBookService {
                 .toList();
     }
 
-    // 💡 수정된 상세 조회 메서드
+    // 상세 조회 메서드
     @Transactional(readOnly = true)
     public CollectBookDetailResponse getCollectBookDetail(Long userId, Long collectBookId) {
         CollectBook collectBook = collectBookRepository.findById(collectBookId)

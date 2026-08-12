@@ -1,7 +1,7 @@
 package com.example.bookmark.domain.record.controller;
 
 import com.example.bookmark.common.response.ApiResponse;
-import com.example.bookmark.global.service.LocalImageUploadService;
+import com.example.bookmark.global.service.S3ImageUploadService; // 👈 S3 서비스로 교체
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +18,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ImageUploadController {
 
-    private final LocalImageUploadService localImageUploadService;
+    private final S3ImageUploadService s3ImageUploadService;
 
     @Operation(summary = "기록용 로컬 이미지 파일 업로드 (최대 5장)")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<List<String>>> uploadImages(
             @RequestPart("files") List<MultipartFile> files
     ) {
-        List<String> imageUrls = localImageUploadService.uploadImages(files);
+        List<String> imageUrls = s3ImageUploadService.uploadImages(files);
         return ResponseEntity.ok(ApiResponse.onSuccess(imageUrls));
     }
 }

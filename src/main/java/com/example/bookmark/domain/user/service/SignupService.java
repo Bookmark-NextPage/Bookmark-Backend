@@ -1,6 +1,7 @@
 package com.example.bookmark.domain.user.service;
 
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
+import com.example.bookmark.domain.collectBook.service.SystemCollectBookService;
 import com.example.bookmark.domain.user.dto.request.SignupRequest;
 import com.example.bookmark.domain.user.dto.response.SignupResponse;
 import com.example.bookmark.domain.user.entity.User;
@@ -10,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -17,6 +20,7 @@ public class SignupService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final SystemCollectBookService systemCollectBookService;
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -43,6 +47,10 @@ public class SignupService {
                 .build();
 
         User savedUser = userRepository.save(user);
+
+        // 4. 가입 연도 기준 시스템 콜렉트북 자동 생성 추가
+        int currentYear = LocalDate.now().getYear();
+        systemCollectBookService.createSystemCollectBook(savedUser, currentYear);
 
         return SignupResponse.from(savedUser);
     }

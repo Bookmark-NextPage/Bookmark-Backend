@@ -18,11 +18,19 @@ spring:
   ai:
     google:
       api-key: ${GEMINI_API_KEY}
+      model: gemini-3.1-flash-image-preview
+      # 지금 사용하는 게 아주 조금 더 비싸서, 상황에 따라 gemini-3.1-flash-lite-image 로 교체 가능
 
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 3600000   # 1시간(ms)
 
-file:
-  dir: uploads/
-  upload-dir: uploads/
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
