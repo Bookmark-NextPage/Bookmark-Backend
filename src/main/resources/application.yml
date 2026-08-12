@@ -15,11 +15,9 @@ spring:
         format_sql: true
         show_sql: true
 
-  ai:
-    google:
-      api-key: ${GEMINI_API_KEY}
-      model: gemini-3.1-flash-image-preview
-      # 지금 사용하는 게 아주 조금 더 비싸서, 상황에 따라 gemini-3.1-flash-lite-image 로 교체 가능
+  cloud:
+    gcp:
+      project-id: gen-lang-client-0321881990
 
 jwt:
   secret: ${JWT_SECRET}
