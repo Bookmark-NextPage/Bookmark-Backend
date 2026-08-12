@@ -23,6 +23,7 @@ public enum RecordErrorCode implements BaseCode {
     FRIENDSHIP_REQUIRED(HttpStatus.FORBIDDEN, "FRIEND403_1", "친구 관계인 유저만 댓글 및 좋아요를 남길 수 있습니다."),
     KEYWORD_NOT_FOUND(HttpStatus.NOT_FOUND, "KEYWORD404_1", "존재하지 않는 키워드(태그)가 포함되어 있습니다."),
 
+    CANNOT_LIKE_OWN_RECORD(HttpStatus.BAD_REQUEST, "LIKE400", "본인 기록에는 좋아요를 누를 수 없습니다."),
 
     // 태그(감성 키워드) 관련
     TAG_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "TAG400_1", "태그는 최대 10개까지만 생성할 수 있습니다."),
