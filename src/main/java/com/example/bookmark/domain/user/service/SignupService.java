@@ -1,6 +1,8 @@
 package com.example.bookmark.domain.user.service;
 
+import com.example.bookmark.domain.bucketBoard.entity.BoardTheme;
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
+import com.example.bookmark.domain.bucketBoard.repository.BoardThemeRepository;
 import com.example.bookmark.domain.collectBook.service.SystemCollectBookService;
 import com.example.bookmark.domain.user.dto.request.SignupRequest;
 import com.example.bookmark.domain.user.dto.response.SignupResponse;
@@ -18,9 +20,13 @@ import java.time.LocalDate;
 @Transactional(readOnly = true)
 public class SignupService {
 
+    private static final Long DEFAULT_BOARD_THEME_ID = 1L;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final SystemCollectBookService systemCollectBookService;
+    private final BoardThemeRepository boardThemeRepository; // 필드 추가
+
 
     @Transactional
     public SignupResponse signup(SignupRequest request) {
@@ -38,12 +44,17 @@ public class SignupService {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
+        BoardTheme defaultTheme = boardThemeRepository.findById(DEFAULT_BOARD_THEME_ID)
+                .orElseThrow(() -> new IllegalStateException("기본 보드 테마가 존재하지 않습니다. (id=1)"));
+
+
         // 3. 비밀번호 암호화 후 저장
         User user = User.builder()
                 .name(request.name())
                 .loginId(request.loginId())
                 .email(request.email())
                 .password(passwordEncoder.encode(request.password()))
+                .boardTheme(defaultTheme)
                 .build();
 
         User savedUser = userRepository.save(user);

@@ -59,11 +59,12 @@ public class User {
 
     // 2. Builder 생성자에 aiUse 파라미터를 받고, null일 경우 true가 들어가도록 처리
     @Builder
-    public User(String name, String loginId, String email, String password, Boolean aiUse) {
+    public User(String name, String loginId, String email, String password, BoardTheme boardTheme, Boolean aiUse) {
         this.name = name;
         this.loginId = loginId;
         this.email = email;
         this.password = password;
+        this.boardTheme = boardTheme;
         this.aiUse = (aiUse != null) ? aiUse : true;
     }
 
