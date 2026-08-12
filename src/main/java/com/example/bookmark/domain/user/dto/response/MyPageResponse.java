@@ -9,7 +9,8 @@ public record MyPageResponse(
         Profile profile,
         Stats stats,
         List<RecentBook> recentBooks,
-        List<Friend> friends
+        List<Friend> friends,
+        Boolean aiUse
 ) {
     public record Profile(
             Long userId,
