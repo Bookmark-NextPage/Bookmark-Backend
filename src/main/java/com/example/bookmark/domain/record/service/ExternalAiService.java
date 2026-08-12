@@ -2,103 +2,172 @@ package com.example.bookmark.domain.record.service;
 
 import com.example.bookmark.common.exception.CustomException;
 import com.example.bookmark.domain.record.exception.RecordErrorCode;
-import lombok.RequiredArgsConstructor;
+import com.google.cloud.vertexai.VertexAI;
+import com.google.cloud.vertexai.api.Blob;
+import com.google.cloud.vertexai.api.Content;
+import com.google.cloud.vertexai.api.GenerateContentResponse;
+import com.google.cloud.vertexai.api.Part;
+import com.google.cloud.vertexai.generativeai.GenerativeModel;
+import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ExternalAiService {
 
-    @Value("${spring.ai.google.api-key}")
-    private String apiKey;
+    @Value("${spring.cloud.gcp.project-id}")
+    private String projectId;
 
-    @Value("${spring.ai.google.model:gemini-3.1-flash-image-preview}")
-    private String modelName;
+    private static final String LOCATION = "us-central1";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    // Gemini 이미지 생성 모델
+    private static final String MODEL_NAME = "gemini-2.5-flash-image";
 
     public String generateScrapbookImage(String prompt, List<String> imageUrls) {
-        // Gemini generateContent 엔드포인트
-        String url = String.format("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", modelName, apiKey);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        try (VertexAI vertexAI = new VertexAI(projectId, LOCATION)) {
 
-        List<Map<String, Object>> parts = new ArrayList<>();
+            GenerativeModel model =
+                    new GenerativeModel(MODEL_NAME, vertexAI);
 
-        // 1. 텍스트 프롬프트 추가
-        parts.add(Map.of("text", prompt));
+            List<Part> parts = new ArrayList<>();
 
-        // 2. 참조 이미지들 다운로드 & Base64 인코딩 후 inlineData 추가
-        if (imageUrls != null && !imageUrls.isEmpty()) {
-            for (String imageUrl : imageUrls) {
-                try {
-                    String base64Data = fetchAndEncodeImage(imageUrl);
-                    if (base64Data != null) {
-                        parts.add(Map.of(
-                                "inlineData", Map.of(
-                                        "mimeType", "image/jpeg",
-                                        "data", base64Data
+            // ===== 텍스트 프롬프트 =====
+            Part textPart = Part.newBuilder()
+                    .setText(prompt)
+                    .build();
+
+            parts.add(textPart);
+
+            // ===== 첨부 이미지들 (선택값) =====
+            if (imageUrls != null && !imageUrls.isEmpty()) {
+
+                for (String imageUrl : imageUrls) {
+
+                    try {
+
+                        byte[] imageBytes = downloadImage(imageUrl);
+
+                        String mimeType = detectMimeType(imageUrl);
+
+                        Part imagePart = Part.newBuilder()
+                                .setInlineData(
+                                        Blob.newBuilder()
+                                                .setMimeType(mimeType)
+                                                .setData(ByteString.copyFrom(imageBytes))
+                                                .build()
                                 )
-                        ));
-                    }
-                } catch (Exception e) {
-                    log.warn("이미지 다운로드 및 Base64 변환 실패 (URL: {}): {}", imageUrl, e.getMessage());
-                    // 개별 다운로드 실패 시 전체 요청을 중단하지 않고 건너뜀
-                }
-            }
-        }
+                                .build();
 
-        Map<String, Object> requestBody = Map.of(
-                "contents", List.of(Map.of("parts", parts))
-        );
+                        parts.add(imagePart);
 
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+                    } catch (IllegalArgumentException e) {
 
-        try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                        log.warn("지원하지 않는 이미지 형식: {}", imageUrl);
 
-            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                // Gemini 응답에서 생성된 이미지 추출 (Gemini 멀티모달 이미지 생성 응답 구조 처리)
-                List<Map<String, Object>> candidates = (List<Map<String, Object>>) response.getBody().get("candidates");
-                if (candidates != null && !candidates.isEmpty()) {
-                    Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
-                    List<Map<String, Object>> resParts = (List<Map<String, Object>>) content.get("parts");
+                    } catch (Exception e) {
 
-                    for (Map<String, Object> part : resParts) {
-                        if (part.containsKey("inlineData")) {
-                            Map<String, String> inlineData = (Map<String, String>) part.get("inlineData");
-                            String mimeType = inlineData.get("mimeType");
-                            String data = inlineData.get("data");
-                            return "data:" + mimeType + ";base64," + data;
-                        }
+                        log.warn("첨부 이미지 다운로드 실패: {}", imageUrl, e);
                     }
                 }
             }
+
+            // ===== 요청 Content 생성 =====
+            Content content = Content.newBuilder()
+                    .setRole("user")
+                    .addAllParts(parts)
+                    .build();
+
+            // ===== Gemini 호출 =====
+            GenerateContentResponse response = model.generateContent(content);
+
+            // ===== 생성된 이미지 추출 =====
+            return extractImage(response);
+
         } catch (Exception e) {
-            log.error("Gemini AI API 호출 실패: {}", e.getMessage(), e);
-            throw new CustomException(RecordErrorCode.AI_IMAGE_GENERATE_FAILED);
-        }
 
-        throw new CustomException(RecordErrorCode.AI_IMAGE_GENERATE_FAILED);
+            log.error("Vertex AI 이미지 생성 실패", e);
+
+            throw new CustomException(
+                    RecordErrorCode.AI_IMAGE_GENERATE_FAILED
+            );
+        }
     }
 
-    private String fetchAndEncodeImage(String imageUrl) {
-        try (InputStream inputStream = new URI(imageUrl).toURL().openStream()) {
-            byte[] bytes = inputStream.readAllBytes();
-            return Base64.getEncoder().encodeToString(bytes);
-        } catch (Exception e) {
-            log.error("URL 이미지 인코딩 실패: {}", imageUrl, e);
-            return null;
+    private String extractImage(GenerateContentResponse response) {
+
+        var candidates = response.getCandidatesList();
+
+        if (candidates == null || candidates.isEmpty()) {
+
+            throw new CustomException(
+                    RecordErrorCode.AI_IMAGE_GENERATE_FAILED
+            );
         }
+
+        var responseParts =
+                candidates.get(0)
+                        .getContent()
+                        .getPartsList();
+
+        for (var part : responseParts) {
+
+            if (part.hasInlineData()) {
+
+                String mimeType =
+                        part.getInlineData().getMimeType();
+
+                String base64 =
+                        Base64.getEncoder()
+                                .encodeToString(
+                                        part.getInlineData()
+                                                .getData()
+                                                .toByteArray()
+                                );
+
+                return "data:" + mimeType + ";base64," + base64;
+            }
+        }
+
+        throw new CustomException(
+                RecordErrorCode.AI_IMAGE_GENERATE_FAILED
+        );
+    }
+
+    private byte[] downloadImage(String imageUrl) throws Exception {
+
+        try (InputStream inputStream =
+                     new URI(imageUrl).toURL().openStream()) {
+
+            return inputStream.readAllBytes();
+        }
+    }
+
+    /**
+     * jpg, jpeg, png 만 허용
+     */
+    private String detectMimeType(String imageUrl) {
+
+        String lower = imageUrl.toLowerCase();
+
+        if (lower.endsWith(".png")) {
+            return "image/png";
+        }
+
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+            return "image/jpeg";
+        }
+
+        throw new IllegalArgumentException(
+                "지원하지 않는 이미지 형식입니다. jpg, jpeg, png만 가능합니다."
+        );
     }
 }

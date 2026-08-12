@@ -32,83 +32,146 @@ public class AiRecordService {
     private static final int DAILY_MAX_LIMIT = 10;
 
     @Transactional
-    public AiImageGenerateResponse generateScrapImage(Long userId, AiImageGenerateRequest request) {
+    public AiImageGenerateResponse generateScrapImage(
+            Long userId,
+            AiImageGenerateRequest request
+    ) {
 
-        // 1. [검증] 오늘 하루 생성 횟수 체크 (최대 10회)
+        // 1. 하루 생성 횟수 제한
         validateDailyLimit(userId);
 
-        // 2. 구조화된 프롬프트 생성
-        String prompt = buildPrompt(userId, request);
+        // 2. 프롬프트 생성
+        String prompt = buildPrompt(request);
 
-        // 3. Gemini 멀티모달 API 호출 (수정: prompt와 실제 이미지 URL 목록을 함께 전달)
-        String rawAiImage = externalAiService.generateScrapbookImage(prompt, request.getImageUrls());
+        // 3. Vertex AI 이미지 생성
+        String rawAiImage =
+                externalAiService.generateScrapbookImage(
+                        prompt,
+                        request.getImageUrls()
+                );
 
-        // 4. 로컬/S3 스토리지 업로드
-        String storedImageUrl = storageService.uploadFromUrl(rawAiImage);
+        // 4. S3 업로드
+        String storedImageUrl =
+                storageService.uploadFromUrl(rawAiImage);
 
-        // 5. [기록] AI 생성 성공 로그 저장
-        recordAiLogRepository.save(RecordAiLog.builder()
-                .userId(userId)
-                .build());
+        // 5. 생성 로그 저장
+        recordAiLogRepository.save(
+                RecordAiLog.builder()
+                        .userId(userId)
+                        .build()
+        );
 
-        // 6. 결과 반환
+        // 6. 응답 반환
         return new AiImageGenerateResponse(storedImageUrl);
     }
 
     private void validateDailyLimit(Long userId) {
-        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfDay = LocalDate.now().atTime(LocalTime.MAX);
 
-        long count = recordAiLogRepository.countByUserIdAndCreatedAtBetween(userId, startOfDay, endOfDay);
+        LocalDateTime startOfDay =
+                LocalDate.now().atStartOfDay();
+
+        LocalDateTime endOfDay =
+                LocalDate.now().atTime(LocalTime.MAX);
+
+        long count =
+                recordAiLogRepository.countByUserIdAndCreatedAtBetween(
+                        userId,
+                        startOfDay,
+                        endOfDay
+                );
 
         if (count >= DAILY_MAX_LIMIT) {
-            throw new CustomException(RecordErrorCode.AI_RATE_LIMIT_EXCEEDED);
+
+            throw new CustomException(
+                    RecordErrorCode.AI_RATE_LIMIT_EXCEEDED
+            );
         }
     }
 
-    private String buildPrompt(Long userId, AiImageGenerateRequest request) {
+    /**
+     * title + content 는 항상 반영
+     * imageUrls, keywordIds 는 값이 있을 때만 반영
+     * feedback 이 있으면 최우선으로 반영
+     */
+    private String buildPrompt(AiImageGenerateRequest request) {
+
         StringBuilder sb = new StringBuilder();
 
-        sb.append("Role: Professional digital scrapbook designer.\n");
-        sb.append("Task: Create an artistic scrapbook style collage image based on the following journal entry.\n\n");
+        sb.append("You are a professional scrapbook illustrator.\n");
+        sb.append("Generate ONE scrapbook-style image.\n");
+        sb.append("The image must visually represent the user's diary.\n\n");
 
-        // [필수] 제목 및 본문
-        sb.append("### Journal Entry\n");
-        sb.append("- Title: ").append(request.getTitle()).append("\n");
-        sb.append("- Content: ").append(request.getContent()).append("\n\n");
+        // ===== 필수값 =====
+        sb.append("[PRIMARY DIARY INFORMATION]\n");
+        sb.append("Title: ")
+                .append(request.getTitle())
+                .append("\n");
 
-        // [선택] 감성 키워드
-        if (request.getKeywordIds() != null && !request.getKeywordIds().isEmpty()) {
-            List<Keyword> keywords = keywordRepository.findAllById(request.getKeywordIds());
+        sb.append("Diary: ")
+                .append(limitLength(request.getContent(), 2000))
+                .append("\n\n");
+
+        // ===== 선택값: 키워드 =====
+        if (request.getKeywordIds() != null
+                && !request.getKeywordIds().isEmpty()) {
+
+            List<Keyword> keywords =
+                    keywordRepository.findAllById(
+                            request.getKeywordIds()
+                    );
+
             String keywordNames = keywords.stream()
                     .map(Keyword::getName)
                     .collect(Collectors.joining(", "));
+
             if (!keywordNames.isBlank()) {
-                sb.append("### Mood & Keywords\n");
-                sb.append("- Mood: ").append(keywordNames).append("\n\n");
+
+                sb.append("[MOOD KEYWORDS]\n");
+                sb.append(keywordNames).append("\n\n");
             }
         }
 
-        // [선택] 첨부 이미지 안내 (수정: 실제 전달된 이미지를 레이아웃에 자연스럽게 통합하도록 지침 변경)
-        if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
-            int imageCount = request.getImageUrls().size();
-            sb.append("### Photo Layout Guidance\n");
-            sb.append("- ").append(imageCount)
-                    .append(" image(s) are attached in this request. Seamlessly integrate the visual elements, mood, and key subjects of these attached photos into the scrapbook layout as cohesive photo cutouts.\n\n");
+        // ===== 선택값: 첨부 이미지 =====
+        if (request.getImageUrls() != null
+                && !request.getImageUrls().isEmpty()) {
+
+            sb.append("[ATTACHED PHOTOS]\n");
+            sb.append("Use the attached photos as visual references.\n");
+            sb.append("Preserve the main subjects, atmosphere, lighting, and color mood.\n");
+            sb.append("Integrate them naturally as photo cutouts in the scrapbook.\n\n");
         }
 
-        // [재생성 시] 사용자 피드백 최우선 순위 지정
-        if (request.getFeedback() != null && !request.getFeedback().isBlank()) {
-            sb.append("### CRITICAL REVISION INSTRUCTION (Highest Priority)\n");
-            sb.append("The user requested the following revision: \"")
-                    .append(request.getFeedback())
-                    .append("\". Strictly prioritize this feedback above all other design elements while recreating the image.\n\n");
+        // ===== 재생성 피드백 =====
+        if (request.getFeedback() != null
+                && !request.getFeedback().isBlank()) {
+
+            sb.append("[REVISION REQUEST - HIGHEST PRIORITY]\n");
+            sb.append(request.getFeedback()).append("\n\n");
         }
 
-        // 디자인 스타일 지침
-        sb.append("### Design Style\n");
-        sb.append("- Create a cohesive scrapbook layout featuring torn paper textures, tape, stickers, decorative borders, and handwritten vibe elements.");
+        // ===== 스타일 지침 =====
+        sb.append("[STYLE REQUIREMENTS]\n");
+        sb.append("- Warm emotional scrapbook aesthetic\n");
+        sb.append("- Torn paper textures\n");
+        sb.append("- Washi tape and stickers\n");
+        sb.append("- Handwritten doodles and memo notes\n");
+        sb.append("- Layered collage composition\n");
+        sb.append("- Soft natural colors unless feedback requests otherwise\n");
+        sb.append("- Keep the overall mood consistent with the diary text\n\n");
+
+        sb.append("Return one final scrapbook illustration only.");
 
         return sb.toString();
+    }
+
+    private String limitLength(String text, int maxLength) {
+
+        if (text == null) {
+            return "";
+        }
+
+        return text.length() > maxLength
+                ? text.substring(0, maxLength)
+                : text;
     }
 }
