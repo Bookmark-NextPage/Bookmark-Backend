@@ -53,6 +53,9 @@ public class User {
     @Column(name = "ai_use", nullable = false, columnDefinition = "boolean default true")
     private Boolean aiUse = true;
 
+    @Column(nullable = false)
+    private boolean isInAppNotificationEnabled = true; // 기본값 ON
+
     public void changeBoardTheme(BoardTheme boardTheme) {
         this.boardTheme = boardTheme;
     }
@@ -78,5 +81,10 @@ public class User {
     // 설정 변경 메서드
     public void updateAiUse(Boolean aiUse) {
         this.aiUse = aiUse;
+    }
+
+    // 알림 on/off 변경 메서드
+    public void updateInAppNotificationSetting(boolean enabled) {
+        this.isInAppNotificationEnabled = enabled;
     }
 }
