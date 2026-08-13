@@ -12,6 +12,8 @@ import com.example.bookmark.domain.collectBook.repository.ChapterRepository;
 import com.example.bookmark.domain.collectBook.repository.CollectBookRepository;
 import com.example.bookmark.domain.friend.entity.enums.FriendStatus;
 import com.example.bookmark.domain.friend.repository.FriendRepository;
+import com.example.bookmark.domain.notification.entity.enums.NotificationType;
+import com.example.bookmark.domain.notification.service.NotificationService;
 import com.example.bookmark.domain.record.dto.request.CommentCreateRequest;
 import com.example.bookmark.domain.record.dto.request.RecordCreateRequest;
 import com.example.bookmark.domain.record.dto.response.RecordDetailResponse;
@@ -43,6 +45,7 @@ public class RecordService {
     private final FriendRepository friendRepository;
     private final RecordCommentRepository recordCommentRepository;
     private final RecordLikeRepository recordLikeRepository;
+    private final NotificationService notificationService;
 
     // 1. 콜렉트북 기록 상세 조회 (collectBookId 제거)
     public RecordDetailResponse getRecordDetail(Long userId, Long recordId) {
@@ -132,6 +135,17 @@ public class RecordService {
                 .build();
 
         recordCommentRepository.save(comment);
+
+        // [알림 발송] 자기 자신의 기록에 단 댓글이 아닐 경우 작성자에게 알림 전송
+        if (!record.getUser().getId().equals(userId)) {
+            notificationService.send(
+                    record.getUser(),
+                    NotificationType.COMMENT,
+                    user.getName(),
+                    user.getName() + "님의 " + record.getTitle() + " 기록에 댓글: \"" + request.getContent() + "\"",
+                    "/records/" + record.getId()
+            );
+        }
     }
 
     // 5. 좋아요 등록 (collectBookId 제거)
@@ -151,6 +165,15 @@ public class RecordService {
                 .orElseThrow(() -> new CustomException(RecordErrorCode.USER_NOT_FOUND));
 
         recordLikeRepository.save(RecordLike.builder().record(record).user(user).build());
+
+        // [알림 발송] 기록 작성자에게 반응(좋아요) 알림 전송
+        notificationService.send(
+                record.getUser(),
+                NotificationType.LIKE,
+                user.getName(),
+                "회원님의 " + record.getTitle() + " 기록을 좋아합니다.",
+                "/records/" + record.getId()
+        );
     }
 
     // 6. 좋아요 취소 (collectBookId 제거)
