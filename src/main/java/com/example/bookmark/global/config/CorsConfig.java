@@ -10,7 +10,10 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173") // 프론트엔드 개발 서버 주소
+                .allowedOrigins(
+                        "http://localhost:5173",                    // 로컬 개발
+                        "https://bookmark-frontend-lemon.vercel.app"      // 배포된 프론트
+                )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
