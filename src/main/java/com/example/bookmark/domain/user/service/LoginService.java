@@ -1,8 +1,10 @@
 package com.example.bookmark.domain.user.service;
 
+import com.example.bookmark.common.exception.CustomException;
 import com.example.bookmark.domain.user.dto.request.LoginRequest;
 import com.example.bookmark.domain.user.dto.response.LoginResponse;
 import com.example.bookmark.domain.user.entity.User;
+import com.example.bookmark.domain.user.exception.UserErrorCode;
 import com.example.bookmark.domain.user.repository.UserRepository;
 import com.example.bookmark.global.auth.JwtProvider;
 import lombok.RequiredArgsConstructor;
@@ -22,10 +24,10 @@ public class LoginService {
     public LoginResponse login(LoginRequest request) {
         User user = userRepository
                 .findByLoginIdOrEmail(request.identifier(), request.identifier())
-                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
+                .orElseThrow(() -> new CustomException(UserErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
+            throw new CustomException(UserErrorCode.INVALID_CREDENTIALS);
         }
 
         String accessToken = jwtProvider.createAccessToken(user.getId());
