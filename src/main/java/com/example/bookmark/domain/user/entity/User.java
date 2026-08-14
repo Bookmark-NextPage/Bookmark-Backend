@@ -54,7 +54,7 @@ public class User {
     private Boolean aiUse = true;
 
     @Column(nullable = false)
-    private boolean isInAppNotificationEnabled = true; // 기본값 ON
+    private Boolean isInAppNotificationEnabled = true; // 기본값 ON
 
     public void changeBoardTheme(BoardTheme boardTheme) {
         this.boardTheme = boardTheme;
@@ -62,13 +62,14 @@ public class User {
 
     // 2. Builder 생성자에 aiUse 파라미터를 받고, null일 경우 true가 들어가도록 처리
     @Builder
-    public User(String name, String loginId, String email, String password, BoardTheme boardTheme, Boolean aiUse) {
+    public User(String name, String loginId, String email, String password, BoardTheme boardTheme, Boolean aiUse, Boolean isInAppNotificationEnabled) {
         this.name = name;
         this.loginId = loginId;
         this.email = email;
         this.password = password;
         this.boardTheme = boardTheme;
         this.aiUse = (aiUse != null) ? aiUse : true;
+        this.isInAppNotificationEnabled = (isInAppNotificationEnabled != null) ? isInAppNotificationEnabled : true;
     }
 
     // 프로필 편집

@@ -67,6 +67,6 @@ public class MyPageService {
                 ))
                 .toList();
 
-        return new MyPageResponse(profile, stats, recentBooks, friends, user.getAiUse());
+        return new MyPageResponse(profile, stats, recentBooks, friends, user.getAiUse(), user.getIsInAppNotificationEnabled());
     }
 }
