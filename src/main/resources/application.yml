@@ -9,8 +9,26 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
         show_sql: true
+
+  cloud:
+    gcp:
+      project-id: gen-lang-client-0321881990
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 3600000   # 1시간(ms)
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    region:
+      static: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
