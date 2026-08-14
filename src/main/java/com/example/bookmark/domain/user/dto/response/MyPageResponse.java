@@ -10,7 +10,8 @@ public record MyPageResponse(
         Stats stats,
         List<RecentBook> recentBooks,
         List<Friend> friends,
-        Boolean aiUse
+        Boolean aiUse,
+        Boolean isInAppNotificationEnabled
 ) {
     public record Profile(
             Long userId,
