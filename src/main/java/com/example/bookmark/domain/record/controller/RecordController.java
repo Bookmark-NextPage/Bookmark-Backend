@@ -4,6 +4,7 @@ import com.example.bookmark.common.response.ApiResponse;
 import com.example.bookmark.domain.record.dto.request.CommentCreateRequest;
 import com.example.bookmark.domain.record.dto.request.RecordAiImageUpdateRequest;
 import com.example.bookmark.domain.record.dto.response.RecordDetailResponse;
+import com.example.bookmark.domain.record.dto.response.RecordSearchResponse;
 import com.example.bookmark.domain.record.service.RecordService;
 import com.example.bookmark.global.auth.LoginUserId;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "Record API", description = "콜렉트북 기록 API")
 @RestController
@@ -79,4 +82,15 @@ public class RecordController {
         recordService.updateAiImageUrl(userId, recordId, request.getAiImageUrl());
         return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<RecordSearchResponse>> search(
+            @LoginUserId Long userId,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ResponseEntity.ok(
+                recordService.search(userId, keyword)
+        );
+    }
+
 }
