@@ -1,6 +1,7 @@
 package com.example.bookmark.domain.record.service;
 
 import com.example.bookmark.common.exception.CustomException;
+import com.example.bookmark.common.response.ErrorCode;
 import com.example.bookmark.domain.bucketBoard.entity.BucketBoardMemo;
 import com.example.bookmark.domain.bucketBoard.repository.BucketBoardMemoRepository;
 import com.example.bookmark.domain.collectBook.entity.Chapter;
@@ -18,6 +19,7 @@ import com.example.bookmark.domain.record.dto.request.CommentCreateRequest;
 import com.example.bookmark.domain.record.dto.request.RecordCreateRequest;
 import com.example.bookmark.domain.record.dto.response.RecordDetailResponse;
 import com.example.bookmark.domain.record.dto.response.RecordSaveResponse;
+import com.example.bookmark.domain.record.dto.response.RecordSearchResponse;
 import com.example.bookmark.domain.record.entity.*;
 import com.example.bookmark.domain.record.entity.Record;
 import com.example.bookmark.domain.record.exception.RecordErrorCode;
@@ -27,9 +29,12 @@ import com.example.bookmark.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +51,8 @@ public class RecordService {
     private final RecordCommentRepository recordCommentRepository;
     private final RecordLikeRepository recordLikeRepository;
     private final NotificationService notificationService;
+    private final RecordSearchRepository recordSearchRepository;
+
 
     // 1. 콜렉트북 기록 상세 조회 (collectBookId 제거)
     public RecordDetailResponse getRecordDetail(Long userId, Long recordId) {
@@ -267,5 +274,39 @@ public class RecordService {
         }
 
         return record;
+    }
+
+    private static final int MAX_SUGGESTION = 8;
+    private static final int MAX_TERMS = 5;
+
+
+    public List<RecordSearchResponse> search(Long userId, String keyword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        if (!StringUtils.hasText(keyword)) {
+            return List.of();
+        }
+
+        List<String> terms = Arrays.stream(keyword.trim().split("\\s+"))
+                .filter(StringUtils::hasText)
+                .map(String::toLowerCase)
+                .map(this::escapeLike)
+                .distinct()
+                .limit(MAX_TERMS)
+                .collect(Collectors.toList());
+
+        if (terms.isEmpty()) {
+            return List.of();
+        }
+
+        return recordSearchRepository.searchByTerms(user.getId(), terms, MAX_SUGGESTION);
+    }
+
+    // escape 문자를 '!' 로 지정했으므로 ! % _ 를 이스케이프
+    private String escapeLike(String term) {
+        return term.replace("!", "!!")
+                .replace("%", "!%")
+                .replace("_", "!_");
     }
 }
