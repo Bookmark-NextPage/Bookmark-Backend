@@ -68,7 +68,7 @@ public class NotificationService {
         // 2. SSE 실시간 발송 조건:
         // - 알림 설정이 ON(true)이거나
         // - 알림 설정이 OFF(false)이더라도 친구 요청(FRIEND_REQUEST)인 경우!
-        boolean shouldSendSse = receiver.isInAppNotificationEnabled()
+        Boolean shouldSendSse = receiver.getIsInAppNotificationEnabled()
                 || type == NotificationType.FRIEND_REQUEST;
 
         if (shouldSendSse) {
@@ -93,7 +93,7 @@ public class NotificationService {
         Page<Notification> page;
 
         // 알림 설정이 OFF(false)인 유저는 카테고리에 상관없이 오직 'FRIEND_REQUEST' 알림만 반환
-        if (!user.isInAppNotificationEnabled()) {
+        if (!user.getIsInAppNotificationEnabled()) {
             page = notificationRepository.findByReceiverIdAndTypeInOrderByCreatedAtDesc(
                     userId, List.of(NotificationType.FRIEND_REQUEST), pageable);
         } else {
@@ -150,6 +150,6 @@ public class NotificationService {
 
         user.updateInAppNotificationSetting(enabled);
 
-        return user.isInAppNotificationEnabled();
+        return user.getIsInAppNotificationEnabled();
     }
 }

@@ -1,7 +1,5 @@
 package com.example.bookmark.domain.user.service;
 
-import com.example.bookmark.domain.collectBook.entity.CollectBook;
-import com.example.bookmark.domain.collectBook.entity.enums.Visibility;
 import com.example.bookmark.domain.collectBook.repository.CollectBookRepository;
 import com.example.bookmark.domain.friend.entity.enums.FriendStatus;
 import com.example.bookmark.domain.friend.repository.FriendRepository;
@@ -11,6 +9,8 @@ import com.example.bookmark.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.bookmark.common.exception.CustomException;
+import com.example.bookmark.domain.user.exception.UserErrorCode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +26,7 @@ public class MyPageService {
 
     public MyPageResponse getMyPage(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
-
+                .orElseThrow(() -> new CustomException(UserErrorCode.USER_NOT_FOUND));
         // 프로필
         MyPageResponse.Profile profile = new MyPageResponse.Profile(
                 user.getId(), user.getName(), user.getLoginId(),
@@ -67,6 +66,6 @@ public class MyPageService {
                 ))
                 .toList();
 
-        return new MyPageResponse(profile, stats, recentBooks, friends, user.getAiUse());
+        return new MyPageResponse(profile, stats, recentBooks, friends, user.getAiUse(), user.getIsInAppNotificationEnabled());
     }
 }

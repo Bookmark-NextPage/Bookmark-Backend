@@ -1,9 +1,6 @@
 package com.example.bookmark.domain.user.controller;
 
-import com.example.bookmark.domain.user.dto.request.LoginRequest;
-import com.example.bookmark.domain.user.dto.request.ProfileUpdateRequest;
-import com.example.bookmark.domain.user.dto.request.SignupRequest;
-import com.example.bookmark.domain.user.dto.request.WithdrawRequest;
+import com.example.bookmark.domain.user.dto.request.*;
 import com.example.bookmark.domain.user.dto.response.LoginResponse;
 import com.example.bookmark.domain.user.dto.response.MyPageResponse;
 import com.example.bookmark.domain.user.dto.response.ProfileResponse;
@@ -78,5 +75,15 @@ public class UserController {
     ) {
         accountService.withdraw(userId, request.password());
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "AI 기능 ON/OFF 설정 변경", description = "사용자의 AI 기능 사용 여부(true/false)를 변경합니다.")
+    @PatchMapping("/me/ai-use")
+    public ResponseEntity<Boolean> updateAiUse(
+            @LoginUserId Long userId,
+            @Valid @RequestBody AiUseUpdateRequest request
+    ) {
+        boolean result = profileService.updateAiUse(userId, request.aiUse());
+        return ResponseEntity.ok(result);
     }
 }
