@@ -21,6 +21,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final List<String> WHITELIST = List.of(
             "/api/user/signup",
             "/api/user/login",
+            "/swagger-ui/*",
+            "/swagger-ui/index.html",
             "/swagger-ui",
             "/v3/api-docs",
             "/swagger-resources"
